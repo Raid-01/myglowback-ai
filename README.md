@@ -1,0 +1,94 @@
+# MyGlowBack.AI
+
+B2B SaaS skincare recommendation engine for clinics — built from your spec with Next.js 14
+(App Router), Prisma + PostgreSQL, NextAuth, and Paystack.
+
+## What's included
+
+All 12 pages/features from the brief, in priority order: landing page with pricing calculator,
+auth (email/password + Google), sign-up flow, dashboard with renewal banner, billing center with
+PDF invoices, the exact reminder popup logic, the midnight Lagos cron job, the assessment form
+restricted to the 4 core concerns, prescription output with PDF generation, inventory CRUD,
+patient management with search, and the Super Admin view. Plus the public booking portal
+("Clinic unavailable" state) mentioned in the service-cessation section.
+
+The Prisma schema is your exact schema, with two additions needed for it to actually validate —
+Prisma requires both sides of a relation to be declared, and a couple were only declared on one
+side (see the comment at the top of `prisma/schema.prisma`).
+
+## Getting started
+
+```bash
+npm install
+cp .env.example .env        # fill in DATABASE_URL at minimum to run locally
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+npm run dev
+```
+
+Seeded logins (password for all: `ChangeMe123!`):
+- Super admin: `admin@myglowback.ai`
+- Clinic admin: `admin@glowhausclinic.ng`
+- Staff: `staff@glowhausclinic.ng`
+
+Swap the dummy `SkincareRule` rows in `prisma/seed.ts` for your real guide whenever you're ready —
+`src/lib/matching-engine.ts` doesn't need to change, it just reads whatever's in that table.
+
+## Judgment calls I made (spec didn't fully specify these)
+
+- **Paystack integration** is done via direct REST calls (`src/lib/paystack.ts`) rather than an
+  npm SDK — there isn't a single official one, and REST keeps it dependency-light.
+- **PDF generation** uses `@react-pdf/renderer` for both invoices and the prescription output.
+- **Cron** uses Vercel Cron (`vercel.json`, `0 23 * * *` UTC = midnight Lagos, since Lagos has no
+  DST) hitting `/api/cron/check-subscriptions`, rather than `node-cron` — `node-cron` needs a
+  long-running process, which doesn't fit a serverless Next.js deploy. If you're self-hosting on a
+  persistent server instead of Vercel, swap this for `node-cron` calling the same logic.
+- **"Start Free Trial" vs. the billing model**: the landing page CTA says "Start Free Trial," but
+  the schema has no trial concept — sign-up creates a real subscription (`isActive: true`)
+  immediately with an `UNPAID` first invoice, and the new admin is dropped on the Billing page to
+  complete payment. Dashboard access isn't gated on that first payment; only the cron job's
+  `subscriptionEnd` check locks anyone out. If you want a harder paywall before the first payment,
+  that's a small change to the billing page.
+- **UI kit**: hand-built minimal Button/Card/Input/Select/Badge components instead of pulling in
+  shadcn/ui via its CLI, since that needs an interactive setup step. They're styled to the same
+  spirit (rounded, soft-shadow) so swapping to real shadcn later is a drop-in change if you want it.
+- **Design direction**: sage green / warm ivory / honey gold, Fraunces (display) + Inter (body) —
+  matches "clean medical/spa aesthetic, soft greens, whites, beige" while avoiding the generic
+  cream+terracotta look a lot of AI-generated UIs default to.
+- **Renewal extension math**: on successful payment, the new `subscriptionEnd` extends from the
+  *current* end date if renewing early (so paid-for time isn't lost), or from *today* if the
+  subscription had already lapsed.
+- **"Switch Billing Cycle only at renewal time"** is implemented as: allowed once 10 days or fewer
+  remain, or after lapsing. Adjust the window in `src/app/api/clinic/billing-cycle/route.ts` if you
+  meant something stricter (e.g. only in the 24 hours right after a renewal payment).
+
+## Deploying — free to host, safe to sell on
+
+**Vercel's free Hobby plan explicitly prohibits commercial/revenue-generating use in its
+Terms of Service** — the moment you take a paying clinic, you're technically in violation. Since
+this app exists to be sold, don't deploy it there on the free tier. `vercel.json` is left in the
+repo in case you ever move to Vercel Pro ($20/mo, no such restriction), but the default path below
+avoids that problem entirely and costs nothing to start:
+
+| Piece | Service | Why |
+|---|---|---|
+| App hosting | **Render**, free Web Service | Real Node.js runtime (bcryptjs, nodemailer, @react-pdf/renderer all need this — not an edge runtime), free tier permits commercial use. Trade-off: spins down after 15 min idle, ~1 min cold start on the next visit. `render.yaml` in this repo is a one-click Blueprint. |
+| Database | **Neon**, free plan | Permanent free Postgres (not a trial), 0.5 GB storage, commercial use allowed, scales to zero when idle. Grab the connection string from your Neon project and drop it into `DATABASE_URL`. |
+| Email | **Resend**, free plan | 3,000 emails/month, 100/day — plenty for reminder emails at pilot-clinic scale. Verify a sending domain, then use SMTP credentials from Resend in the `EMAIL_SERVER_*` vars. |
+| Daily cron | **cron-job.org** (free) hitting `/api/cron/check-subscriptions` | Works regardless of host, so it's not a lock-in decision. Set it for 23:00 UTC daily. |
+| Domain | Render's free `.onrender.com` subdomain to start | Fine for a pilot with 1–2 clinics. A real domain (~$10–15/year on Namecheap or similar) is worth it once you're actually selling — it's a B2B tool, and a URL like `app.myglowback.ai` reads a lot more trustworthy to a clinic owner than `myglowback-ai.onrender.com`. |
+
+**Steps:** push this repo to GitHub → create a Neon project, copy its connection string → on
+Render, "New Blueprint," point it at the repo, paste in the env vars from `.env.example` (Neon's
+URL, Resend's key, your Paystack test keys) → set up the cron-job.org ping → done. All in free
+tiers until you have a paying clinic, at which point ₦450,000/year from a single Annual customer
+covers Render's $7/mo Starter (removes the cold start) for the next several years.
+
+## Not done / needs real credentials before it's live
+
+- Paystack test/live keys, Google OAuth credentials, SMTP credentials — all in `.env.example`.
+- No automated tests were written given the scope; I'd recommend at minimum covering the matching
+  engine and the cron job's checkpoint logic before this handles real clinic data.
+- `npm install` / a live dev server weren't run in this environment — the code is complete and
+  internally consistent, but give it a `npm run build` on your machine as a first sanity check.

@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: myglowback-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: DATABASE_URL
+        sync: false # paste your Neon connection string here
+      - key: NEXTAUTH_URL
+        sync: false # e.g. https://myglowback-ai.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: EMAIL_SERVER_HOST
+        value: smtp.resend.com
+      - key: EMAIL_SERVER_PORT
+        value: '465'
+      - key: EMAIL_SERVER_USER
+        value: resend
+      - key: EMAIL_SERVER_PASSWORD
+        sync: false # your Resend API key
+      - key: EMAIL_FROM
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false # same as NEXTAUTH_URL
+      - key: NODE_ENV
+        value: production
+
+# Note: Render's free workspace plan may not include native Cron Jobs.
+# Rather than depend on that, point a free external scheduler (e.g.
+# cron-job.org) at:
+#   GET https://<your-app>.onrender.com/api/cron/check-subscriptions
+#   Header: Authorization: Bearer <CRON_SECRET>
+# scheduled for 23:00 UTC daily (= midnight Africa/Lagos, no DST to worry about).
+# This works on ANY host, so it's the safer default regardless of where you deploy.
