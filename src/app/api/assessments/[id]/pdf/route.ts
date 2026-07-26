@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     createdAt: assessment.createdAt.toLocaleDateString('en-NG'),
   });
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="protocol-${assessment.patient.lastName}.pdf"`,

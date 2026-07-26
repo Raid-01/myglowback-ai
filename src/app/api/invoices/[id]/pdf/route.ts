@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     paidAt: invoice.paidAt?.toLocaleDateString('en-NG'),
   });
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${invoice.invoiceNumber}.pdf"`,
