@@ -17,11 +17,11 @@ const CONCERNS = [
 const SKIN_TYPES = ['OILY', 'DRY', 'COMBINATION', 'SENSITIVE', 'NORMAL'] as const;
 const AGE_RANGES = [
   { value: 'UNDER_18', label: 'Under 18' },
-  { value: '_18_25', label: '18–25' },
-  { value: '_26_35', label: '26–35' },
-  { value: '_36_45', label: '36–45' },
-  { value: '_46_55', label: '46–55' },
-  { value: '_55_PLUS', label: '55+' },
+  { value: 'AGE_18_25', label: '18–25' },
+  { value: 'AGE_26_35', label: '26–35' },
+  { value: 'AGE_36_45', label: '36–45' },
+  { value: 'AGE_46_55', label: '46–55' },
+  { value: 'AGE_55_PLUS', label: '55+' },
 ] as const;
 
 export function AssessmentForm({ patients }: { patients: { id: string; firstName: string; lastName: string }[] }) {

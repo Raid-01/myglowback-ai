@@ -17,7 +17,7 @@ const bodySchema = z.object({
   allergies: z.string().optional(),
   goals: z.string().optional(),
   ageRange: z
-    .enum(['UNDER_18', '_18_25', '_26_35', '_36_45', '_46_55', '_55_PLUS'])
+    .enum(['UNDER_18', 'AGE_18_25', 'AGE_26_35', 'AGE_36_45', 'AGE_46_55', 'AGE_55_PLUS'])
     .optional(),
 });
 
