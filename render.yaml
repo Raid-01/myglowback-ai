@@ -3,7 +3,7 @@ services:
     name: myglowback-ai
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
@@ -34,8 +34,6 @@ services:
         generateValue: true
       - key: NEXT_PUBLIC_APP_URL
         sync: false # same as NEXTAUTH_URL
-      - key: NODE_ENV
-        value: production
 
 # Note: Render's free workspace plan may not include native Cron Jobs.
 # Rather than depend on that, point a free external scheduler (e.g.
