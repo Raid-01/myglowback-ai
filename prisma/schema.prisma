@@ -1,0 +1,229 @@
+// MyGlowBack.AI — Prisma schema
+//
+// This follows the spec exactly, with two small additions required for the
+// schema to actually validate (Prisma needs both sides of every relation
+// declared, the original spec only listed one side for a few of them):
+//   1. Assessment gets a clinicId/clinic relation (Clinic.assessments needed it)
+//   2. Location, User, and Patient get back-relation arrays for Appointment
+// Everything else — models, fields, enums, cascade behavior — is as specified.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinic {
+  id                String         @id @default(cuid())
+  name              String
+  email             String
+  phone             String?
+  address           String?
+  logoUrl           String?
+  billingCycle      BillingCycle   @default(ANNUAL)
+  subscriptionStart DateTime
+  subscriptionEnd   DateTime
+  isActive          Boolean        @default(true)
+  locations         Location[]
+  staff             User[]
+  patients          Patient[]
+  products          Product[]
+  invoices          Invoice[]
+  assessments       Assessment[]
+  notifications     Notification[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+enum BillingCycle {
+  ANNUAL
+  MONTHLY
+}
+
+model Location {
+  id           String        @id @default(cuid())
+  name         String
+  address      String
+  phone        String?
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  appointments Appointment[]
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String?
+  role         Role          @default(STAFF)
+  clinicId     String?
+  clinic       Clinic?       @relation(fields: [clinicId], references: [id])
+  assessments  Assessment[]
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  CLINIC_ADMIN
+  STAFF
+}
+
+model Patient {
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phone        String
+  dateOfBirth  DateTime?
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  assessments  Assessment[]
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Assessment {
+  id                      String    @id @default(cuid())
+  patientId               String
+  patient                 Patient   @relation(fields: [patientId], references: [id])
+  staffId                 String
+  staff                   User      @relation(fields: [staffId], references: [id])
+  clinicId                String
+  clinic                  Clinic    @relation(fields: [clinicId], references: [id])
+  skinType                SkinType
+  concerns                Concern[] // STRICTLY LIMITED TO: ACNE, HYPERPIGMENTATION, SUN_DAMAGE, AGING
+  allergies               String?
+  goals                   String?
+  ageRange                AgeRange?
+  recommendedRoutine      Json?
+  recommendedIngredients  String[]
+  matchedProducts         String[]
+  suggestedUpsells        String[]
+  followUpDate            DateTime?
+  createdAt               DateTime  @default(now())
+}
+
+enum SkinType {
+  OILY
+  DRY
+  COMBINATION
+  SENSITIVE
+  NORMAL
+}
+
+enum Concern {
+  ACNE
+  HYPERPIGMENTATION
+  SUN_DAMAGE
+  AGING
+} // Hyper-focused on these 4 core concerns only
+
+enum AgeRange {
+  UNDER_18
+  _18_25
+  _26_35
+  _36_45
+  _46_55
+  _55_PLUS
+}
+
+model Product {
+  id                String     @id @default(cuid())
+  name              String
+  brand             String?
+  category          String
+  price             Float?
+  stockQuantity     Int        @default(0)
+  activeIngredients String[]
+  concerns          Concern[] // Matches the 4 core concerns
+  isUpsell          Boolean    @default(false)
+  clinicId          String
+  clinic            Clinic     @relation(fields: [clinicId], references: [id])
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  patientId  String
+  patient    Patient           @relation(fields: [patientId], references: [id])
+  locationId String
+  location   Location          @relation(fields: [locationId], references: [id])
+  staffId    String?
+  staff      User?             @relation(fields: [staffId], references: [id])
+  title      String
+  date       DateTime
+  duration   Int
+  status     AppointmentStatus @default(PENDING)
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique
+  clinicId        String
+  clinic          Clinic        @relation(fields: [clinicId], references: [id])
+  amount          Float
+  discountApplied Float         @default(0)
+  totalDue        Float
+  status          InvoiceStatus @default(UNPAID)
+  dueDate         DateTime
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum InvoiceStatus {
+  PAID
+  UNPAID
+  OVERDUE
+}
+
+model Notification {
+  id              String   @id @default(cuid())
+  clinicId        String
+  clinic          Clinic   @relation(fields: [clinicId], references: [id])
+  type            NotifType
+  sentAt          DateTime
+  daysUntilExpiry Int
+  message         String
+  link            String
+  isSeen          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+enum NotifType {
+  DASHBOARD
+  EMAIL
+}
+
+// Dummy rules — will be replaced by the uploaded guide. Only covers the 4 core concerns.
+model SkincareRule {
+  id           String   @id @default(cuid())
+  name         String
+  condition    Json     // e.g. { concerns: ["ACNE"], skinType: ["OILY"], avoidIngredients: ["retinol"] }
+  routine      Json     // { am: ["Step 1..."], pm: ["Step 2..."] }
+  ingredients  String[]
+  upsells      String[]
+  followUpDays Int      @default(30)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
