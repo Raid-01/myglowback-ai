@@ -5,6 +5,9 @@ import { initializeTransaction, naira, PRICING } from '@/lib/paystack';
 
 export async function POST() {
   const session = await requireSession();
+  if (session.user.role !== 'CLINIC_ADMIN') {
+    return NextResponse.json({ error: 'Only a Clinic Admin can manage billing.' }, { status: 403 });
+  }
   if (!session.user.clinicId) {
     return NextResponse.json({ error: 'No clinic associated with this account.' }, { status: 400 });
   }

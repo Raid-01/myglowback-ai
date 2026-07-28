@@ -44,18 +44,23 @@ export function BillingActions({
   async function handleSwitch(cycle: 'ANNUAL' | 'MONTHLY') {
     setSwitching(true);
     setError(null);
-    const res = await fetch('/api/clinic/billing-cycle', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ billingCycle: cycle }),
-    });
-    setSwitching(false);
-    if (!res.ok) {
-      const body = await res.json();
-      setError(body.error);
-      return;
+    try {
+      const res = await fetch('/api/clinic/billing-cycle', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ billingCycle: cycle }),
+      });
+      setSwitching(false);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? 'Could not switch billing cycle.');
+        return;
+      }
+      router.refresh();
+    } catch {
+      setSwitching(false);
+      setError('Could not reach the server. Check your connection and try again.');
     }
-    router.refresh();
   }
 
   return (

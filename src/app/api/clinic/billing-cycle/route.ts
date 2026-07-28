@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { requireRole } from '@/lib/session';
+import { requireSession } from '@/lib/session';
 import { daysUntilInLagos } from '@/lib/date';
 
 const bodySchema = z.object({ billingCycle: z.enum(['ANNUAL', 'MONTHLY']) });
 
 export async function PATCH(req: Request) {
-  const session = await requireRole(['CLINIC_ADMIN']);
+  const session = await requireSession();
+  if (session.user.role !== 'CLINIC_ADMIN') {
+    return NextResponse.json({ error: 'Only a Clinic Admin can change the billing cycle.' }, { status: 403 });
+  }
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 

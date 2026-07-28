@@ -45,6 +45,7 @@ export function AssessmentForm({ patients }: { patients: { id: string; firstName
     }
 
     setLoading(true);
+    setError(null);
     const form = new FormData(e.currentTarget);
     const payload: Record<string, unknown> = {
       skinType: form.get('skinType'),
@@ -63,21 +64,26 @@ export function AssessmentForm({ patients }: { patients: { id: string; firstName
       payload.patientId = form.get('patientId');
     }
 
-    const res = await fetch('/api/assessments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch('/api/assessments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    setLoading(false);
-    if (!res.ok) {
-      const body = await res.json();
-      setError(body.error?.formErrors?.[0] ?? body.error ?? 'Something went wrong.');
-      return;
+      setLoading(false);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error?.formErrors?.[0] ?? body?.error ?? 'Something went wrong.');
+        return;
+      }
+
+      const { id } = await res.json();
+      router.push(`/dashboard/assessments/${id}`);
+    } catch {
+      setLoading(false);
+      setError('Could not reach the server. Check your connection and try again.');
     }
-
-    const { id } = await res.json();
-    router.push(`/dashboard/assessments/${id}`);
   }
 
   return (

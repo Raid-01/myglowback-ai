@@ -58,15 +58,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const daysUntilExpiry = daysUntilInLagos(clinic.subscriptionEnd);
-  const pendingReminder = await prisma.notification.findFirst({
-    where: { clinicId: clinic.id, type: 'DASHBOARD', isSeen: false },
-    orderBy: { daysUntilExpiry: 'asc' },
-  });
+  const isClinicAdmin = role === 'CLINIC_ADMIN';
+  const pendingReminder = isClinicAdmin
+    ? await prisma.notification.findFirst({
+        where: { clinicId: clinic.id, type: 'DASHBOARD', isSeen: false },
+        orderBy: { daysUntilExpiry: 'asc' },
+      })
+    : null;
 
   return (
     <DashboardShell
       role={role}
-      banner={<RenewalBanner daysUntilExpiry={daysUntilExpiry} isTrialing={clinic.isTrialing} />}
+      banner={
+        isClinicAdmin ? (
+          <RenewalBanner daysUntilExpiry={daysUntilExpiry} isTrialing={clinic.isTrialing} />
+        ) : undefined
+      }
     >
       {pendingReminder && (
         <ReminderPopup

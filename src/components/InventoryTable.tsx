@@ -50,49 +50,72 @@ export function InventoryTable({ initialProducts }: { initialProducts: Product[]
     setError(null);
     const form = new FormData(e.currentTarget);
 
-    const res = await fetch('/api/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.get('name'),
-        brand: form.get('brand') || undefined,
-        category: form.get('category'),
-        price: form.get('price') ? Number(form.get('price')) : undefined,
-        stockQuantity: Number(form.get('stockQuantity') || 0),
-        activeIngredients: String(form.get('activeIngredients') || '')
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        concerns,
-        isUpsell: form.get('isUpsell') === 'on',
-      }),
-    });
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.get('name'),
+          brand: form.get('brand') || undefined,
+          category: form.get('category'),
+          price: form.get('price') ? Number(form.get('price')) : undefined,
+          stockQuantity: Number(form.get('stockQuantity') || 0),
+          activeIngredients: String(form.get('activeIngredients') || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          concerns,
+          isUpsell: form.get('isUpsell') === 'on',
+        }),
+      });
 
-    setSaving(false);
-    if (!res.ok) {
-      const body = await res.json();
-      setError(body.error?.formErrors?.[0] ?? 'Could not add product.');
-      return;
+      setSaving(false);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error?.formErrors?.[0] ?? 'Could not add product.');
+        return;
+      }
+      const created = await res.json();
+      setProducts((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setShowForm(false);
+      setConcerns([]);
+      router.refresh();
+    } catch {
+      setSaving(false);
+      setError('Could not reach the server. Check your connection and try again.');
     }
-    const created = await res.json();
-    setProducts((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
-    setShowForm(false);
-    setConcerns([]);
-    router.refresh();
   }
 
   async function updateStock(id: string, stockQuantity: number) {
+    const previous = products.find((p) => p.id === id)?.stockQuantity;
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stockQuantity } : p)));
-    await fetch(`/api/products/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stockQuantity }),
-    });
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stockQuantity }),
+      });
+      if (!res.ok) throw new Error('failed');
+    } catch {
+      // Revert the optimistic update — the server didn't actually save it.
+      if (previous !== undefined) {
+        setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, stockQuantity: previous } : p)));
+      }
+      setError('Could not update stock. Check your connection and try again.');
+    }
   }
 
   async function handleDelete(id: string) {
+    const removed = products.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
-    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('failed');
+    } catch {
+      // Put it back — the server didn't actually delete it.
+      if (removed) setProducts((prev) => [...prev, removed].sort((a, b) => a.name.localeCompare(b.name)));
+      setError('Could not delete product. Check your connection and try again.');
+    }
   }
 
   return (

@@ -52,6 +52,13 @@ export async function POST(req: Request) {
       },
     });
     patientId = patient.id;
+  } else {
+    // Confirm this patient actually belongs to the requesting clinic —
+    // never trust a client-supplied ID without checking ownership.
+    const owned = await prisma.patient.findFirst({ where: { id: patientId, clinicId } });
+    if (!owned) {
+      return NextResponse.json({ error: 'Patient not found for this clinic.' }, { status: 404 });
+    }
   }
 
   const match = await matchAssessmentToRoutine({

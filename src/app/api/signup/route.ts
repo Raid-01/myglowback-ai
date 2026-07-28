@@ -27,6 +27,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'An account with that email already exists.' }, { status: 409 });
   }
 
+  const existingClinic = await prisma.clinic.findUnique({ where: { email: clinicEmail } });
+  if (existingClinic) {
+    return NextResponse.json(
+      { error: 'A clinic with that email already exists. Try a different clinic email.' },
+      { status: 409 }
+    );
+  }
+
   // 14-day free trial — no invoice yet. billingCycle is just their stated
   // preference for whenever they do choose to pay (during or after trial).
   const subscriptionStart = new Date();

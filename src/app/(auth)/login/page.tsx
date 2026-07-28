@@ -19,19 +19,24 @@ export default function LoginPage() {
     setError(null);
 
     const form = new FormData(e.currentTarget);
-    const res = await signIn('credentials', {
-      email: form.get('email'),
-      password: form.get('password'),
-      redirect: false,
-    });
+    try {
+      const res = await signIn('credentials', {
+        email: form.get('email'),
+        password: form.get('password'),
+        redirect: false,
+      });
 
-    setLoading(false);
-    if (res?.ok) {
-      router.push('/dashboard');
-    } else if (res?.error === 'CLINIC_INACTIVE') {
-      setError('This clinic\u2019s subscription has expired. Contact your Clinic Admin to renew.');
-    } else {
-      setError('Incorrect email or password.');
+      setLoading(false);
+      if (res?.ok) {
+        router.push('/dashboard');
+      } else if (res?.error === 'CLINIC_INACTIVE') {
+        setError('This clinic\u2019s subscription has expired. Contact your Clinic Admin to renew.');
+      } else {
+        setError('Incorrect email or password.');
+      }
+    } catch {
+      setLoading(false);
+      setError('Could not reach the server. Check your connection and try again.');
     }
   }
 

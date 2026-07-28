@@ -32,30 +32,35 @@ export default function SignupPage() {
       billingCycle,
     };
 
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const body = await res.json();
-      setError(body.error?.formErrors?.[0] ?? body.error ?? 'Something went wrong.');
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error?.formErrors?.[0] ?? body?.error ?? `Something went wrong (${res.status}).`);
+        setLoading(false);
+        return;
+      }
+
+      const signInRes = await signIn('credentials', {
+        email: payload.adminEmail,
+        password: payload.password,
+        redirect: false,
+      });
+
       setLoading(false);
-      return;
-    }
-
-    const signInRes = await signIn('credentials', {
-      email: payload.adminEmail,
-      password: payload.password,
-      redirect: false,
-    });
-
-    setLoading(false);
-    if (signInRes?.ok) {
-      router.push('/dashboard/billing?welcome=1');
-    } else {
-      router.push('/login');
+      if (signInRes?.ok) {
+        router.push('/dashboard/billing?welcome=1');
+      } else {
+        router.push('/login');
+      }
+    } catch {
+      setError('Could not reach the server. Check your connection and try again.');
+      setLoading(false);
     }
   }
 

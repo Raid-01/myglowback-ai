@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { requireRole } from '@/lib/session';
+import { requireSession } from '@/lib/session';
 
 const CONCERNS = ['ACNE', 'HYPERPIGMENTATION', 'SUN_DAMAGE', 'AGING'] as const;
 
@@ -23,7 +23,10 @@ async function assertOwnership(productId: string, clinicId: string) {
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const session = await requireRole(['CLINIC_ADMIN']);
+  const session = await requireSession();
+  if (session.user.role !== 'CLINIC_ADMIN') {
+    return NextResponse.json({ error: 'Only a Clinic Admin can edit products.' }, { status: 403 });
+  }
   const existing = await assertOwnership(params.id, session.user.clinicId!);
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -35,7 +38,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const session = await requireRole(['CLINIC_ADMIN']);
+  const session = await requireSession();
+  if (session.user.role !== 'CLINIC_ADMIN') {
+    return NextResponse.json({ error: 'Only a Clinic Admin can delete products.' }, { status: 403 });
+  }
   const existing = await assertOwnership(params.id, session.user.clinicId!);
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

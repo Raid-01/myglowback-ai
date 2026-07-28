@@ -65,6 +65,7 @@ export async function GET(req: Request) {
         clinicName: clinic.name,
         daysUntilExpiry: daysLeft,
         renewUrl: link,
+        isTrialing: clinic.isTrialing,
       });
     } catch (err) {
       console.error(`Failed to send reminder email to ${clinic.email}:`, err);
