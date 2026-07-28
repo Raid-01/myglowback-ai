@@ -64,8 +64,8 @@ export default async function SuperAdminPage() {
                   {c.billingCycle === 'ANNUAL' ? 'Annual' : 'Monthly'}
                 </td>
                 <td className="py-3">
-                  <Badge tone={c.isActive ? 'sage' : 'danger'}>
-                    {c.isActive ? 'Active' : 'Expired'}
+                  <Badge tone={!c.isActive ? 'danger' : c.isTrialing ? 'honey' : 'sage'}>
+                    {!c.isActive ? 'Expired' : c.isTrialing ? 'Trial' : 'Active'}
                   </Badge>
                 </td>
                 <td className="py-3 text-clinical-text">

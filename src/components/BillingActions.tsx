@@ -11,10 +11,12 @@ export function BillingActions({
   billingCycle,
   canSwitchCycle,
   daysUntilExpiry,
+  isTrialing,
 }: {
   billingCycle: 'ANNUAL' | 'MONTHLY';
   canSwitchCycle: boolean;
   daysUntilExpiry: number;
+  isTrialing: boolean;
 }) {
   const router = useRouter();
   const [loadingRenew, setLoadingRenew] = useState(false);
@@ -23,11 +25,18 @@ export function BillingActions({
 
   async function handleRenew() {
     setLoadingRenew(true);
-    const res = await fetch('/api/paystack/initiate', { method: 'POST' });
-    const data = await res.json();
-    if (data.authorization_url) {
-      window.location.href = data.authorization_url;
-    } else {
+    setError(null);
+    try {
+      const res = await fetch('/api/paystack/initiate', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.authorization_url) {
+        window.location.href = data.authorization_url;
+        return; // navigating away — leave the button in its loading state
+      }
+      setError(data.error ?? 'Could not start checkout.');
+      setLoadingRenew(false);
+    } catch {
+      setError('Could not reach the payment provider. Try again in a moment.');
       setLoadingRenew(false);
     }
   }
@@ -52,7 +61,7 @@ export function BillingActions({
   return (
     <div className="space-y-4">
       <Button size="lg" onClick={handleRenew} disabled={loadingRenew} className="w-full">
-        {loadingRenew ? 'Taking you to checkout…' : 'Renew Now →'}
+        {loadingRenew ? 'Taking you to checkout…' : isTrialing ? 'Add Payment →' : 'Renew Now →'}
       </Button>
 
       <div>

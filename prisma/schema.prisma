@@ -27,6 +27,7 @@ model Clinic {
   subscriptionStart DateTime
   subscriptionEnd   DateTime
   isActive          Boolean        @default(true)
+  isTrialing        Boolean        @default(true)
   locations         Location[]
   staff             User[]
   patients          Patient[]

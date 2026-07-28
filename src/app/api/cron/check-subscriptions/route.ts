@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
+import {
+  daysUntilInLagos,
+  hasSubscriptionLapsed,
+  REMINDER_CHECKPOINTS,
+  TRIAL_REMINDER_CHECKPOINTS,
+} from '@/lib/date';
 import { prisma } from '@/lib/prisma';
-import { daysUntilInLagos, hasSubscriptionLapsed, REMINDER_CHECKPOINTS } from '@/lib/date';
 import { sendRenewalReminderEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic'; // never statically cache a cron endpoint
@@ -23,15 +28,18 @@ export async function GET(req: Request) {
 
   for (const clinic of clinics) {
     // ── 1. Service cessation at 23:59:59 Lagos on subscriptionEnd's date ──
+    // (this covers both a lapsed trial and a lapsed paid subscription —
+    // same field, same cutoff logic, either way)
     if (hasSubscriptionLapsed(clinic.subscriptionEnd)) {
       await prisma.clinic.update({ where: { id: clinic.id }, data: { isActive: false } });
       deactivated++;
-      continue; // an already-lapsed clinic doesn't need renewal reminders
+      continue; // an already-lapsed clinic doesn't need reminders
     }
 
-    // ── 2. Reminder checkpoints: 90 / 60 / 30 / 20 / 10 days out ────────
+    // ── 2. Reminder checkpoints — trials get 7/3/1 days, paid gets 90/60/30/20/10 ──
     const daysLeft = daysUntilInLagos(clinic.subscriptionEnd);
-    if (!REMINDER_CHECKPOINTS.includes(daysLeft as any)) continue;
+    const checkpoints = clinic.isTrialing ? TRIAL_REMINDER_CHECKPOINTS : REMINDER_CHECKPOINTS;
+    if (!checkpoints.includes(daysLeft as never)) continue;
 
     const alreadySent = await prisma.notification.findFirst({
       where: { clinicId: clinic.id, daysUntilExpiry: daysLeft },
@@ -40,7 +48,9 @@ export async function GET(req: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
     const link = `${appUrl}/dashboard/billing`;
-    const message = `Your subscription renews in ${daysLeft} days.`;
+    const message = clinic.isTrialing
+      ? `Your free trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`
+      : `Your subscription renews in ${daysLeft} days.`;
 
     await prisma.notification.createMany({
       data: [

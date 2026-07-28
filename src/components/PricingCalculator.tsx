@@ -52,7 +52,7 @@ export function PricingCalculator() {
         </Button>
       </Link>
       <p className="mt-3 text-xs text-clinical-muted">
-        You can switch billing cycles at renewal.
+        14 days free, no card required. Switch billing cycles at renewal.
       </p>
     </div>
   );

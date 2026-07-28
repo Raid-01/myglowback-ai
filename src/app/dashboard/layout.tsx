@@ -43,12 +43,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {clinic.name} is currently unavailable
           </h1>
           <p className="mt-2 text-sm text-clinical-muted">
-            This clinic&apos;s subscription has expired, so staff access and the public booking
-            portal are paused. Renew to restore access immediately.
+            {clinic.isTrialing
+              ? "This clinic's free trial has ended, so staff access and the public booking portal are paused. Add payment to restore access immediately."
+              : "This clinic's subscription has expired, so staff access and the public booking portal are paused. Renew to restore access immediately."}
           </p>
           <Link href="/dashboard/billing" className="mt-6 block">
             <Button size="lg" className="w-full">
-              Renew Now →
+              {clinic.isTrialing ? 'Add Payment →' : 'Renew Now →'}
             </Button>
           </Link>
         </div>
@@ -63,7 +64,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   });
 
   return (
-    <DashboardShell role={role} banner={<RenewalBanner daysUntilExpiry={daysUntilExpiry} />}>
+    <DashboardShell
+      role={role}
+      banner={<RenewalBanner daysUntilExpiry={daysUntilExpiry} isTrialing={clinic.isTrialing} />}
+    >
       {pendingReminder && (
         <ReminderPopup
           notificationId={pendingReminder.id}

@@ -12,6 +12,7 @@ const SNOOZE_HOURS = 24;
 export function ReminderPopup({ notificationId, daysUntilExpiry }: Props) {
   const [visible, setVisible] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const snoozeKey = `mgb-reminder-snooze-${notificationId}`;
 
   useEffect(() => {
@@ -30,17 +31,24 @@ export function ReminderPopup({ notificationId, daysUntilExpiry }: Props) {
 
   async function handleRenewNow() {
     setRedirecting(true);
-    await fetch(`/api/notifications/${notificationId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isSeen: true }),
-    });
+    setError(null);
+    try {
+      await fetch(`/api/notifications/${notificationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSeen: true }),
+      });
 
-    const res = await fetch('/api/paystack/initiate', { method: 'POST' });
-    const data = await res.json();
-    if (data.authorization_url) {
-      window.location.href = data.authorization_url;
-    } else {
+      const res = await fetch('/api/paystack/initiate', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.authorization_url) {
+        window.location.href = data.authorization_url;
+        return;
+      }
+      setError(data.error ?? 'Could not start checkout.');
+      setRedirecting(false);
+    } catch {
+      setError('Could not reach the payment provider.');
       setRedirecting(false);
     }
   }
@@ -62,6 +70,8 @@ export function ReminderPopup({ notificationId, daysUntilExpiry }: Props) {
         >
           {redirecting ? 'Taking you to checkout…' : 'Renew Now →'}
         </button>
+
+        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
         <button
           onClick={handleRemindLater}

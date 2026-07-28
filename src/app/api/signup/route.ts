@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { addDays, addYears } from 'date-fns';
+import { addDays } from 'date-fns';
 import { prisma } from '@/lib/prisma';
-import { PRICING } from '@/lib/paystack';
+import { TRIAL_LENGTH_DAYS } from '@/lib/date';
+import { sendTrialWelcomeEmail } from '@/lib/email';
 
 const bodySchema = z.object({
   clinicName: z.string().min(2),
@@ -26,10 +27,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'An account with that email already exists.' }, { status: 409 });
   }
 
+  // 14-day free trial — no invoice yet. billingCycle is just their stated
+  // preference for whenever they do choose to pay (during or after trial).
   const subscriptionStart = new Date();
-  const subscriptionEnd =
-    billingCycle === 'ANNUAL' ? addYears(subscriptionStart, 1) : addDays(subscriptionStart, 30);
-  const amount = billingCycle === 'ANNUAL' ? PRICING.ANNUAL : PRICING.MONTHLY;
+  const subscriptionEnd = addDays(subscriptionStart, TRIAL_LENGTH_DAYS);
 
   const result = await prisma.$transaction(async (tx) => {
     const clinic = await tx.clinic.create({
@@ -39,7 +40,8 @@ export async function POST(req: Request) {
         billingCycle,
         subscriptionStart,
         subscriptionEnd,
-        isActive: true, // access starts immediately; first invoice is generated UNPAID below
+        isActive: true,
+        isTrialing: true,
       },
     });
 
@@ -62,23 +64,26 @@ export async function POST(req: Request) {
       },
     });
 
-    const invoice = await tx.invoice.create({
-      data: {
-        invoiceNumber: `INV-${clinic.id.slice(-6).toUpperCase()}-${Date.now()}`,
-        clinicId: clinic.id,
-        amount,
-        totalDue: amount,
-        status: 'UNPAID',
-        dueDate: subscriptionStart,
-      },
-    });
-
-    return { clinic, admin, invoice };
+    return { clinic, admin };
   });
+
+  // Email failures shouldn't break signup — the trial is already active
+  // either way, so this is a nice-to-have, not a blocker.
+  try {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    await sendTrialWelcomeEmail({
+      to: adminEmail,
+      clinicName,
+      adminName,
+      trialEndsAt: subscriptionEnd,
+      loginUrl: `${appUrl}/login`,
+    });
+  } catch (err) {
+    console.error('Welcome email failed to send:', err);
+  }
 
   return NextResponse.json({
     ok: true,
     clinicId: result.clinic.id,
-    invoiceId: result.invoice.id,
   });
 }

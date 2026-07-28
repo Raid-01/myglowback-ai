@@ -25,6 +25,12 @@ export function hasSubscriptionLapsed(subscriptionEnd: Date): boolean {
   return daysUntilInLagos(subscriptionEnd) < 0;
 }
 
-/** The exact reminder checkpoints required by the spec. */
+/** The exact reminder checkpoints required by the spec, for paid renewals. */
 export const REMINDER_CHECKPOINTS = [90, 60, 30, 20, 10] as const;
 export type ReminderCheckpoint = (typeof REMINDER_CHECKPOINTS)[number];
+
+/** Shorter checkpoints for the 14-day free trial — 90/60/30-day reminders
+ * would never fire in a 14-day window, so trials get their own schedule. */
+export const TRIAL_REMINDER_CHECKPOINTS = [7, 3, 1] as const;
+
+export const TRIAL_LENGTH_DAYS = 14;

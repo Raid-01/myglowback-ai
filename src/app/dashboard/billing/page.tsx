@@ -20,7 +20,8 @@ export default async function BillingPage({
   });
 
   const daysUntilExpiry = daysUntilInLagos(clinic.subscriptionEnd);
-  const status = clinic.isActive ? (daysUntilExpiry < 0 ? 'Expired' : 'Active') : 'Expired';
+  const expired = daysUntilExpiry < 0 || !clinic.isActive;
+  const status = expired ? 'Expired' : clinic.isTrialing ? 'Trial' : 'Active';
 
   return (
     <div>
@@ -29,9 +30,10 @@ export default async function BillingPage({
         Manage your subscription, invoices, and payment.
       </p>
 
-      {searchParams.welcome && (
+      {searchParams.welcome && clinic.isTrialing && (
         <div className="mt-4 rounded-xl bg-honey-100 px-4 py-3 text-sm text-honey-700">
-          Welcome! Your clinic is set up — complete your first payment below to activate billing.
+          Welcome! You&apos;re on a 14-day free trial — no payment needed yet. Add payment anytime
+          below to continue seamlessly once your trial ends.
         </div>
       )}
       {searchParams.ref && (
@@ -45,10 +47,20 @@ export default async function BillingPage({
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-medium text-clinical-text">
-              Current subscription
+              {clinic.isTrialing ? 'Free trial' : 'Current subscription'}
             </h2>
-            <Badge tone={status === 'Active' ? 'sage' : 'danger'}>{status}</Badge>
+            <Badge tone={status === 'Active' ? 'sage' : status === 'Trial' ? 'honey' : 'danger'}>
+              {status}
+            </Badge>
           </div>
+
+          {clinic.isTrialing && !expired && (
+            <p className="mt-2 text-sm text-clinical-muted">
+              {daysUntilExpiry} day{daysUntilExpiry === 1 ? '' : 's'} left in your trial — your
+              chosen plan is {clinic.billingCycle === 'ANNUAL' ? 'Annual' : 'Monthly'}, charged
+              only once you add payment.
+            </p>
+          )}
 
           <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
             <div>
@@ -64,7 +76,9 @@ export default async function BillingPage({
               </dd>
             </div>
             <div>
-              <dt className="text-clinical-muted">End Date</dt>
+              <dt className="text-clinical-muted">
+                {clinic.isTrialing ? 'Trial Ends' : 'End Date'}
+              </dt>
               <dd className="font-medium text-clinical-text">
                 {clinic.subscriptionEnd.toLocaleDateString('en-NG')}
               </dd>
@@ -75,7 +89,11 @@ export default async function BillingPage({
             Invoice history
           </h3>
           {invoices.length === 0 ? (
-            <p className="text-sm text-clinical-muted">No invoices yet.</p>
+            <p className="text-sm text-clinical-muted">
+              {clinic.isTrialing
+                ? "No invoices yet — you're still in your free trial."
+                : 'No invoices yet.'}
+            </p>
           ) : (
             <ul className="divide-y divide-clinical-border">
               {invoices.map((inv) => (
@@ -108,6 +126,7 @@ export default async function BillingPage({
             billingCycle={clinic.billingCycle}
             canSwitchCycle={daysUntilExpiry <= 10}
             daysUntilExpiry={daysUntilExpiry}
+            isTrialing={clinic.isTrialing}
           />
         </Card>
       </div>

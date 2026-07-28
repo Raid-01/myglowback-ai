@@ -101,6 +101,10 @@ export default function SignupPage() {
 
           <div>
             <Label>Billing cycle</Label>
+            <p className="mb-2 text-xs text-clinical-muted">
+              You won&apos;t be charged today — this just sets your plan for after your free
+              14-day trial.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               {(['ANNUAL', 'MONTHLY'] as const).map((cycle) => (
                 <button
