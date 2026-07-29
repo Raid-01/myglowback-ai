@@ -3,6 +3,34 @@
 B2B SaaS skincare recommendation engine for clinics — built from your spec with Next.js 14
 (App Router), Prisma + PostgreSQL, NextAuth, and Paystack.
 
+## Current status (update this as things change)
+
+**Live infrastructure:**
+- Code: GitHub — `Raid-01/myglowback-ai`
+- Hosting: Render (free tier) — `https://myglowback-ai.onrender.com`
+- Database: Neon (free tier), connected and working
+- Email: Resend connected — was failing due to Render's free tier blocking outbound SMTP
+  (platform-level rule, not a config issue), fixed by switching to Resend's HTTP API instead of
+  SMTP/Nodemailer. Still in sandbox mode (`onboarding@resend.dev`, can only deliver to the Resend
+  account's own signup email until a real domain is verified).
+- Payments: Paystack **not yet connected** — still placeholder keys, so "Add Payment" correctly
+  shows an error rather than hanging
+- Daily cron (trial expiry + reminder emails): **not yet connected** — code is built and ready at
+  `/api/cron/check-subscriptions`, but no scheduler is actually calling it yet. Needs a free
+  service like cron-job.org pointed at it once a day, with the `CRON_SECRET` from Render's
+  Environment tab as a Bearer token.
+
+**Product features live:** 14-day free trial on signup, welcome + payment-confirmation emails
+(built, pending the Resend debugging above), all 12 spec pages, PDF generation for invoices and
+prescriptions, role-based permissions (Clinic Admin vs. Staff vs. Super Admin).
+
+**Still using dummy data:** the `SkincareRule` table has 5 example rules — swap these for the real
+ebook's protocols whenever ready (`src/lib/matching-engine.ts` doesn't need to change, only the
+data).
+
+**Not yet done:** real branding (currently a generic sage/ivory placeholder look), PillsRx
+subdomain for email, Paystack live-mode keys (needs business/bank verification with Paystack).
+
 ## What's included
 
 All 12 pages/features from the brief, in priority order: landing page with pricing calculator,

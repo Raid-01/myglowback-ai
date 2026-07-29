@@ -1,15 +1,36 @@
-import nodemailer from 'nodemailer';
+// Email sending via Resend's HTTP API (not SMTP/Nodemailer).
+//
+// Render's free tier blocks outbound SMTP traffic (ports 25/465/587) as of
+// September 2025 to prevent spam abuse — this is a platform-level network
+// rule, not something wrong with credentials or code. Resend's REST API
+// runs over regular HTTPS (port 443), which is never blocked, since
+// blocking it would break the app's other web requests too (Paystack,
+// etc.). Same email content as before, different transport underneath.
 
-function getTransport() {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_SERVER_HOST,
-    port: Number(process.env.EMAIL_SERVER_PORT ?? 465),
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
+const RESEND_API_URL = 'https://api.resend.com/emails';
+
+async function sendResendEmail(params: { to: string; subject: string; html: string }) {
+  const apiKey = process.env.EMAIL_SERVER_PASSWORD; // holds the Resend API key
+  if (!apiKey) throw new Error('EMAIL_SERVER_PASSWORD (Resend API key) is not set');
+
+  const res = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
     },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    }),
   });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend API error: ${res.status} ${body}`);
+  }
 }
 
 export async function sendTrialWelcomeEmail(params: {
@@ -44,8 +65,7 @@ export async function sendTrialWelcomeEmail(params: {
     </p>
   </div>`;
 
-  await getTransport().sendMail({
-    from: process.env.EMAIL_FROM,
+  await sendResendEmail({
     to,
     subject: `Welcome to MyGlowBack.AI — your 14-day trial has started`,
     html,
@@ -80,13 +100,13 @@ export async function sendPaymentConfirmedEmail(params: {
     trusting MyGlowBack.AI with your clinic.</p>
   </div>`;
 
-  await getTransport().sendMail({
-    from: process.env.EMAIL_FROM,
+  await sendResendEmail({
     to,
     subject: `Payment received — welcome to MyGlowBack.AI`,
     html,
   });
 }
+
 export async function sendRenewalReminderEmail(params: {
   to: string;
   clinicName: string;
@@ -119,8 +139,7 @@ export async function sendRenewalReminderEmail(params: {
     </p>
   </div>`;
 
-  await getTransport().sendMail({
-    from: process.env.EMAIL_FROM,
+  await sendResendEmail({
     to,
     subject: isTrialing
       ? `⏳ Your MyGlowBack.AI free trial ends in ${daysUntilExpiry} days!`
