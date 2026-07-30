@@ -5,20 +5,27 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 ## Current status (update this as things change)
 
-**👉 IMMEDIATE NEXT TASKS (two open threads):**
+**👉 IMMEDIATE NEXT TASKS:**
 
-1. **Welcome email still isn't arriving**, even after switching from SMTP to Resend's HTTP API.
-   That switch fixed the *known* cause (Render blocking SMTP), but the email still isn't landing,
-   so there's something else going on. Not yet diagnosed — next step is checking Render's Logs
-   tab for a fresh "Welcome email failed" line (search box, same place as before) to see what
-   Resend's API is actually saying now that SMTP is out of the picture. Signup itself succeeds
-   regardless (the email send is wrapped in try/catch on purpose), so this doesn't block testing
-   everything else.
-2. The dashboard sidebar nav is built with `hidden sm:block` in `src/app/dashboard/layout.tsx` —
-   completely invisible on phone-sized screens, no hamburger menu or mobile alternative built yet.
-   Testing has been happening on mobile, so this blocks navigating anywhere in the dashboard
-   except by typing URLs directly (e.g. `/dashboard/assessments/new` works fine if typed
-   manually). Needs a proper mobile nav added.
+1. **Real root cause found for signup/email flakiness: Neon connection drops, not the email code.**
+   Render logs showed repeating `terminating connection due to administrator command` Postgres
+   errors, timed almost exactly 5 minutes after boot — that's Neon's free-tier compute
+   auto-suspending after 5 minutes idle and killing whatever connections Prisma was holding.
+   Since this happens *before* the welcome-email code even runs, some signup attempts were likely
+   failing at the database step, not the email step. **Fix applied:** `prisma/schema.prisma` now
+   has a `directUrl`, and `.env.example`/`render.yaml` document two separate env vars —
+   `DATABASE_URL` (Neon's **pooled** connection string, hostname has `-pooler` in it — routes
+   through PgBouncer so the app survives Neon's suspend/resume cycle) and `DIRECT_URL` (Neon's
+   plain connection string, used only by `prisma db push` during build). **Action needed:** in
+   Neon's console, click Connect and copy both the pooled and direct connection strings, then set
+   both `DATABASE_URL` and `DIRECT_URL` in Render's Environment tab accordingly, and redeploy.
+2. **Resend domain still unverified** — confirmed via the Resend dashboard (Domains page shows "No
+   domains yet"), so the account is in sandbox mode and can only deliver to the email on the
+   Resend account itself. Once #1 is fixed and signup reliably reaches the email-sending code,
+   verify a sending domain in Resend (needs DNS access) to get real delivery, or test in the
+   meantime using the Resend account's own email as the signup email.
+3. ~~Dashboard sidebar nav invisible on mobile~~ — **fixed.** `src/components/MobileNav.tsx` adds a
+   header bar + hamburger drawer for screens below `sm`; desktop sidebar is unchanged.
 
 **Confirmed working end-to-end (tested live, not just built):** signup → 14-day trial created
 correctly → billing page shows correct trial status → "Add Payment" correctly shows an error

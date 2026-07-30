@@ -7,7 +7,9 @@ services:
     startCommand: npm run start
     envVars:
       - key: DATABASE_URL
-        sync: false # paste your Neon connection string here
+        sync: false # Neon's POOLED string — hostname has "-pooler" in it
+      - key: DIRECT_URL
+        sync: false # Neon's non-pooled string — used only for `prisma db push` during build
       - key: NEXTAUTH_URL
         sync: false # e.g. https://myglowback-ai.onrender.com
       - key: NEXTAUTH_SECRET

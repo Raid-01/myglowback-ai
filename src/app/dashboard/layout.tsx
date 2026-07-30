@@ -5,22 +5,15 @@ import { daysUntilInLagos } from '@/lib/date';
 import { RenewalBanner } from '@/components/RenewalBanner';
 import { ReminderPopup } from '@/components/ReminderPopup';
 import { Button } from '@/components/ui/button';
-import {
-  LayoutDashboard,
-  CreditCard,
-  ClipboardList,
-  Package,
-  Users,
-  ShieldCheck,
-} from 'lucide-react';
+import { MobileNav, ICON_MAP, type NavIconName } from '@/components/MobileNav';
 
-const NAV = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, roles: ['CLINIC_ADMIN', 'STAFF'] },
-  { href: '/dashboard/assessments/new', label: 'New Assessment', icon: ClipboardList, roles: ['CLINIC_ADMIN', 'STAFF'] },
-  { href: '/dashboard/patients', label: 'Patients', icon: Users, roles: ['CLINIC_ADMIN', 'STAFF'] },
-  { href: '/dashboard/inventory', label: 'Inventory', icon: Package, roles: ['CLINIC_ADMIN'] },
-  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard, roles: ['CLINIC_ADMIN'] },
-  { href: '/dashboard/super-admin', label: 'Super Admin', icon: ShieldCheck, roles: ['SUPER_ADMIN'] },
+const NAV: { href: string; label: string; icon: NavIconName; roles: string[] }[] = [
+  { href: '/dashboard', label: 'Overview', icon: 'LayoutDashboard', roles: ['CLINIC_ADMIN', 'STAFF'] },
+  { href: '/dashboard/assessments/new', label: 'New Assessment', icon: 'ClipboardList', roles: ['CLINIC_ADMIN', 'STAFF'] },
+  { href: '/dashboard/patients', label: 'Patients', icon: 'Users', roles: ['CLINIC_ADMIN', 'STAFF'] },
+  { href: '/dashboard/inventory', label: 'Inventory', icon: 'Package', roles: ['CLINIC_ADMIN'] },
+  { href: '/dashboard/billing', label: 'Billing', icon: 'CreditCard', roles: ['CLINIC_ADMIN'] },
+  { href: '/dashboard/super-admin', label: 'Super Admin', icon: 'ShieldCheck', roles: ['SUPER_ADMIN'] },
 ];
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -99,6 +92,7 @@ function DashboardShell({
 
   return (
     <div className="min-h-screen bg-ivory-100">
+      <MobileNav items={items} />
       {banner}
       <div className="mx-auto flex max-w-7xl">
         <aside className="hidden w-60 flex-none border-r border-clinical-border px-4 py-8 sm:block">
@@ -106,16 +100,19 @@ function DashboardShell({
             MyGlowBack<span className="text-honey-500">.AI</span>
           </Link>
           <nav className="space-y-1">
-            {items.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-clinical-text hover:bg-sage-50"
-              >
-                <Icon size={18} className="text-sage-600" />
-                {label}
-              </Link>
-            ))}
+            {items.map(({ href, label, icon }) => {
+              const Icon = ICON_MAP[icon];
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-clinical-text hover:bg-sage-50"
+                >
+                  <Icon size={18} className="text-sage-600" />
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
         </aside>
         <main className="min-w-0 flex-1 px-6 py-8 sm:px-10">{children}</main>
