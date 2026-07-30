@@ -5,14 +5,34 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 ## Current status (update this as things change)
 
+**👉 IMMEDIATE NEXT TASKS (two open threads):**
+
+1. **Welcome email still isn't arriving**, even after switching from SMTP to Resend's HTTP API.
+   That switch fixed the *known* cause (Render blocking SMTP), but the email still isn't landing,
+   so there's something else going on. Not yet diagnosed — next step is checking Render's Logs
+   tab for a fresh "Welcome email failed" line (search box, same place as before) to see what
+   Resend's API is actually saying now that SMTP is out of the picture. Signup itself succeeds
+   regardless (the email send is wrapped in try/catch on purpose), so this doesn't block testing
+   everything else.
+2. The dashboard sidebar nav is built with `hidden sm:block` in `src/app/dashboard/layout.tsx` —
+   completely invisible on phone-sized screens, no hamburger menu or mobile alternative built yet.
+   Testing has been happening on mobile, so this blocks navigating anywhere in the dashboard
+   except by typing URLs directly (e.g. `/dashboard/assessments/new` works fine if typed
+   manually). Needs a proper mobile nav added.
+
+**Confirmed working end-to-end (tested live, not just built):** signup → 14-day trial created
+correctly → billing page shows correct trial status → "Add Payment" correctly shows an error
+(Paystack not connected yet, expected). Assessment flow is reachable via direct URL once the nav
+issue above is worked around, but hasn't been walked through yet.
+
 **Live infrastructure:**
 - Code: GitHub — `Raid-01/myglowback-ai`
 - Hosting: Render (free tier) — `https://myglowback-ai.onrender.com`
 - Database: Neon (free tier), connected and working
-- Email: Resend connected — was failing due to Render's free tier blocking outbound SMTP
-  (platform-level rule, not a config issue), fixed by switching to Resend's HTTP API instead of
-  SMTP/Nodemailer. Still in sandbox mode (`onboarding@resend.dev`, can only deliver to the Resend
-  account's own signup email until a real domain is verified).
+- Email: Resend, switched to HTTP API (not SMTP — Render's free tier blocks outbound SMTP ports,
+  platform-level rule, not a config issue) — **but still not actually delivering, unconfirmed
+  cause, see task #1 above.** Sandbox mode (`onboarding@resend.dev`, can only deliver to the
+  Resend account's own signup email until a real domain is verified).
 - Payments: Paystack **not yet connected** — still placeholder keys, so "Add Payment" correctly
   shows an error rather than hanging
 - Daily cron (trial expiry + reminder emails): **not yet connected** — code is built and ready at
@@ -21,7 +41,7 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
   Environment tab as a Bearer token.
 
 **Product features live:** 14-day free trial on signup, welcome + payment-confirmation emails
-(built, pending the Resend debugging above), all 12 spec pages, PDF generation for invoices and
+(built, delivery unconfirmed — see task #1), all 12 spec pages, PDF generation for invoices and
 prescriptions, role-based permissions (Clinic Admin vs. Staff vs. Super Admin).
 
 **Still using dummy data:** the `SkincareRule` table has 5 example rules — swap these for the real
