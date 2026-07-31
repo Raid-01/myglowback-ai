@@ -19,11 +19,12 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
    plain connection string, used only by `prisma db push` during build). **Action needed:** in
    Neon's console, click Connect and copy both the pooled and direct connection strings, then set
    both `DATABASE_URL` and `DIRECT_URL` in Render's Environment tab accordingly, and redeploy.
-2. **Resend domain still unverified** — confirmed via the Resend dashboard (Domains page shows "No
-   domains yet"), so the account is in sandbox mode and can only deliver to the email on the
-   Resend account itself. Once #1 is fixed and signup reliably reaches the email-sending code,
-   verify a sending domain in Resend (needs DNS access) to get real delivery, or test in the
-   meantime using the Resend account's own email as the signup email.
+   ~~Confirmed fixed~~ — signup, login, and dashboard all working after the redeploy on Jul 30.
+2. ~~Resend domain still unverified~~ — still true (Domains page shows "No domains yet", so the
+   account is in sandbox mode), but **email sending itself is now confirmed working** — a fresh
+   signup on Jul 31 delivered the welcome email successfully. Verify a sending domain in Resend
+   (needs DNS access) when ready to send to real clinic emails instead of just the Resend account's
+   own address.
 3. ~~Dashboard sidebar nav invisible on mobile~~ — **fixed, but had a bug in the first pass that's
    now corrected.** The original mobile-nav fix exported an icon lookup object (`ICON_MAP`) from
    `MobileNav.tsx` (a `'use client'` file) and imported it into `dashboard/layout.tsx` (a Server
@@ -34,6 +35,12 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
    Manifest` — this is what caused the "Application error" page on login. **Fix:** the desktop
    sidebar now has its own local icon map (`SERVER_ICON_MAP` in `layout.tsx`) built from direct
    `lucide-react` imports; `MobileNav.tsx` keeps its own map privately and no longer exports it.
+4. **Reply-to added.** The welcome/payment/renewal emails were sending from Resend's shared
+   sandbox address (`onboarding@resend.dev`, used automatically since no domain is verified yet)
+   with no reply-to set — so "Just reply to this email" went nowhere. `email.ts` now sends a
+   `reply_to` header on every email, pulled from a new `EMAIL_REPLY_TO` env var. **Action needed:**
+   add `EMAIL_REPLY_TO` to Render's Environment tab (currently `pillsrx01@gmail.com`), same
+   Save-rebuild-and-deploy flow as before.
 
 **Confirmed working end-to-end (tested live, not just built):** signup → 14-day trial created
 correctly → billing page shows correct trial status → "Add Payment" correctly shows an error

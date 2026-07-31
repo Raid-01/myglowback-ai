@@ -24,6 +24,7 @@ async function sendResendEmail(params: { to: string; subject: string; html: stri
       to: params.to,
       subject: params.subject,
       html: params.html,
+      reply_to: process.env.EMAIL_REPLY_TO,
     }),
   });
 
