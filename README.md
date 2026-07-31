@@ -24,8 +24,16 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
    Resend account itself. Once #1 is fixed and signup reliably reaches the email-sending code,
    verify a sending domain in Resend (needs DNS access) to get real delivery, or test in the
    meantime using the Resend account's own email as the signup email.
-3. ~~Dashboard sidebar nav invisible on mobile~~ — **fixed.** `src/components/MobileNav.tsx` adds a
-   header bar + hamburger drawer for screens below `sm`; desktop sidebar is unchanged.
+3. ~~Dashboard sidebar nav invisible on mobile~~ — **fixed, but had a bug in the first pass that's
+   now corrected.** The original mobile-nav fix exported an icon lookup object (`ICON_MAP`) from
+   `MobileNav.tsx` (a `'use client'` file) and imported it into `dashboard/layout.tsx` (a Server
+   Component) for the desktop sidebar. That's not allowed — a Server Component can reference a
+   client *component* (e.g. `<MobileNav />`) but not reach into a plain object of components a
+   client file exports and index into it (`ICON_MAP[icon]`). It crashed every single dashboard
+   page load with `Could not find the module "...MobileNav.tsx#ICON_MAP#..." in the React Client
+   Manifest` — this is what caused the "Application error" page on login. **Fix:** the desktop
+   sidebar now has its own local icon map (`SERVER_ICON_MAP` in `layout.tsx`) built from direct
+   `lucide-react` imports; `MobileNav.tsx` keeps its own map privately and no longer exports it.
 
 **Confirmed working end-to-end (tested live, not just built):** signup → 14-day trial created
 correctly → billing page shows correct trial status → "Add Payment" correctly shows an error

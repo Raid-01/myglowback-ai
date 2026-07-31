@@ -18,7 +18,10 @@ import { cn } from '@/lib/utils';
 // Icons can't cross the server → client prop boundary as component
 // references (Next.js requires props to be serializable), so items come in
 // with a string icon name and get mapped to the real component in here.
-export const ICON_MAP = {
+// This map is intentionally NOT exported — a Server Component can't reach
+// into an object of components from a 'use client' file (see
+// dashboard/layout.tsx's SERVER_ICON_MAP for the server-side equivalent).
+const ICON_MAP = {
   LayoutDashboard,
   CreditCard,
   ClipboardList,

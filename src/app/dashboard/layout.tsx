@@ -5,7 +5,29 @@ import { daysUntilInLagos } from '@/lib/date';
 import { RenewalBanner } from '@/components/RenewalBanner';
 import { ReminderPopup } from '@/components/ReminderPopup';
 import { Button } from '@/components/ui/button';
-import { MobileNav, ICON_MAP, type NavIconName } from '@/components/MobileNav';
+import { MobileNav, type NavIconName } from '@/components/MobileNav';
+import {
+  LayoutDashboard,
+  CreditCard,
+  ClipboardList,
+  Package,
+  Users,
+  ShieldCheck,
+} from 'lucide-react';
+
+// A Server Component can't reach into an object of components exported by a
+// 'use client' file (MobileNav's ICON_MAP) — the RSC bundler has no client
+// manifest entry for a plain object like that, only for components rendered
+// directly as JSX. So the desktop sidebar gets its own identical map, built
+// from direct lucide-react imports, instead of importing MobileNav's.
+const SERVER_ICON_MAP = {
+  LayoutDashboard,
+  CreditCard,
+  ClipboardList,
+  Package,
+  Users,
+  ShieldCheck,
+} satisfies Record<NavIconName, typeof LayoutDashboard>;
 
 const NAV: { href: string; label: string; icon: NavIconName; roles: string[] }[] = [
   { href: '/dashboard', label: 'Overview', icon: 'LayoutDashboard', roles: ['CLINIC_ADMIN', 'STAFF'] },
@@ -101,7 +123,7 @@ function DashboardShell({
           </Link>
           <nav className="space-y-1">
             {items.map(({ href, label, icon }) => {
-              const Icon = ICON_MAP[icon];
+              const Icon = SERVER_ICON_MAP[icon];
               return (
                 <Link
                   key={href}
