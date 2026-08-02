@@ -8,22 +8,27 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 **👉 IMMEDIATE NEXT TASKS:**
 
 0. **Clinical algorithm & assessment questionnaire built, real rule data
-   loaded into the seed script — and the sign-up form is rebuilt around
-   it.** See `MASTER_ALGORITHM.md` and `ASSESSMENT_QUESTIONNAIRE.md` in the
-   repo root. `prisma/seed.ts` now contains 21 real rules covering all 5
-   concerns at Mild/Moderate/Severe (where that applies), pregnancy-safe
-   variants wherever a severity-tiered rule would otherwise be blocked for
-   a pregnant patient, one pharmacy-tier rule demonstrating the
-   verification gate, and 4 combination rules for the most common
-   multi-concern overlaps — replacing the old 5 placeholder dummy rules.
-   `AssessmentForm.tsx` is a full multi-step wizard covering the whole
-   questionnaire, wired end to end through to this real rule data.
-   **Action needed — the seed does NOT run automatically on deploy** (check
-   `render.yaml`'s `buildCommand` — it only does `generate` + `db push` +
-   `build`, no seed step). After pushing this code and redeploying: Render
-   → your service → **Shell** tab → run `npx prisma db seed`. Safe to
-   re-run any time after editing rule content — it upserts by rule name
-   rather than duplicating rows.
+   loaded — and the sign-up form is rebuilt around it.** See
+   `MASTER_ALGORITHM.md` and `ASSESSMENT_QUESTIONNAIRE.md` in the repo root.
+   `prisma/rules-data.ts` contains 20 real rules covering all 5 concerns at
+   Mild/Moderate/Severe (where that applies), pregnancy-safe variants
+   wherever a severity-tiered rule would otherwise be blocked for a
+   pregnant patient, one pharmacy-tier rule demonstrating the verification
+   gate, and 4 combination rules for the most common multi-concern overlaps
+   — replacing the old 5 placeholder dummy rules. `AssessmentForm.tsx` is a
+   full multi-step wizard covering the whole questionnaire, wired end to
+   end through to this real rule data. See `TEST_SCENARIOS.md` for a full
+   QA pass — 36 scenarios covering every safety block, severity tier, and
+   edge case.
+   **Action needed — loading the rules onto the live database.** The seed
+   does NOT run automatically on deploy. **Render's Shell tab needs a paid
+   plan** (confirmed — free tier blocks it), so use the SQL path instead:
+   the repo root has `seed-rules.sql`, generated from the same rule data.
+   Open Neon's SQL Editor, paste in the entire contents of that file, and
+   run it. Safe to re-run any time — it upserts by rule name rather than
+   duplicating rows. (If the rule content in `prisma/rules-data.ts` ever
+   changes, regenerate it with `npx tsx scripts/generate-seed-sql.ts >
+   seed-rules.sql` before re-pasting.)
 
 1. **Real root cause found for signup/email flakiness: Neon connection drops, not the email code.**
    Render logs showed repeating `terminating connection due to administrator command` Postgres
