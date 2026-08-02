@@ -7,21 +7,23 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 **👉 IMMEDIATE NEXT TASKS:**
 
-0. **Clinical algorithm & assessment questionnaire built — and the sign-up
-   form is now rebuilt around it.** See `MASTER_ALGORITHM.md` and
-   `ASSESSMENT_QUESTIONNAIRE.md` in the repo root for the protocol content
-   and question design. `AssessmentForm.tsx` is now a full multi-step
-   wizard: patient + sex → safety/pregnancy/hormonal screen (branches based
-   on sex, never shown to male patients) → medical history → objective
-   skin-type determination (computed from behavior questions, not
-   self-labeled) → Fitzpatrick self-assessment → concern selection →
-   per-concern severity questions → review & submit. All schema/API/matching
-   -engine support (pregnancy/hormonal safety blocks, Fitzpatrick, severity
-   scoring, the pharmacy-verification gate, GLOWING_SKIN as a 5th concern)
-   is wired end to end from form submission through to the safety-blocking
-   logic. **Not yet done:** the `SkincareRule` table is still running the
-   placeholder dummy data — none of this new intake richness has real
-   ingredient rules to match against yet. That's the next build.
+0. **Clinical algorithm & assessment questionnaire built, real rule data
+   loaded into the seed script — and the sign-up form is rebuilt around
+   it.** See `MASTER_ALGORITHM.md` and `ASSESSMENT_QUESTIONNAIRE.md` in the
+   repo root. `prisma/seed.ts` now contains 21 real rules covering all 5
+   concerns at Mild/Moderate/Severe (where that applies), pregnancy-safe
+   variants wherever a severity-tiered rule would otherwise be blocked for
+   a pregnant patient, one pharmacy-tier rule demonstrating the
+   verification gate, and 4 combination rules for the most common
+   multi-concern overlaps — replacing the old 5 placeholder dummy rules.
+   `AssessmentForm.tsx` is a full multi-step wizard covering the whole
+   questionnaire, wired end to end through to this real rule data.
+   **Action needed — the seed does NOT run automatically on deploy** (check
+   `render.yaml`'s `buildCommand` — it only does `generate` + `db push` +
+   `build`, no seed step). After pushing this code and redeploying: Render
+   → your service → **Shell** tab → run `npx prisma db seed`. Safe to
+   re-run any time after editing rule content — it upserts by rule name
+   rather than duplicating rows.
 
 1. **Real root cause found for signup/email flakiness: Neon connection drops, not the email code.**
    Render logs showed repeating `terminating connection due to administrator command` Postgres

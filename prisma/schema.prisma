@@ -298,7 +298,7 @@ enum NotifType {
 // Dummy rules — will be replaced by the real rule set (see MASTER_ALGORITHM.md & ASSESSMENT_QUESTIONNAIRE.md). Covers all 5 core concerns.
 model SkincareRule {
   id                       String   @id @default(cuid())
-  name                     String
+  name                     String   @unique // lets the seed script safely replace rules on re-run
   condition                Json     // e.g. { concerns: ["ACNE"], skinType: ["OILY"], avoidIngredients: ["retinol"], severity: ["MODERATE","SEVERE"] }
   routine                  Json     // { am: ["Step 1..."], pm: ["Step 2..."] }
   ingredients              String[]

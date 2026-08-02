@@ -204,6 +204,12 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
       if (conflictsWithAllergy) score -= 100;
       if (violations.length > 0 || under18Retinoid) score -= 1000;
       if (pharmacyGateBlocked) score -= 1000;
+      // Small tie-breaker only: when a verified pharmacy has both a generic
+      // OTC rule and a pharmacy-tier rule scoring identically on concern/
+      // severity match, prefer the more specific pharmacy-tier one. This
+      // never lets pharmacy-tier content outrank a genuinely better OTC
+      // match — it only resolves ties.
+      if (rule.requiresLicensedPharmacy && clinicIsVerifiedPharmacy) score += 0.5;
 
       return { rule, score, concernOverlap };
     })
