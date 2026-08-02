@@ -29,6 +29,14 @@ model Clinic {
   subscriptionEnd   DateTime
   isActive          Boolean        @default(true)
   isTrialing        Boolean        @default(true)
+  // Prescription-tier gate: unverified by default. A clinic can claim
+  // PHARMACY at signup, but licenseVerifiedAt stays null — and therefore
+  // pharmacy-only content stays locked — until a SUPER_ADMIN manually checks
+  // the license number and sets it. Self-declaration alone never unlocks it.
+  licenseType                ClinicLicenseType @default(AESTHETIC_OR_MERCHANT)
+  professionalLicenseNumber  String?
+  licenseVerifiedAt          DateTime?
+  licenseVerifiedByEmail     String?
   locations         Location[]
   staff             User[]
   patients          Patient[]
@@ -38,6 +46,11 @@ model Clinic {
   notifications     Notification[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+}
+
+enum ClinicLicenseType {
+  PHARMACY             // PCN-licensed pharmacy — can unlock prescription-tier escalation content once verified
+  AESTHETIC_OR_MERCHANT // Medspa, aesthetician, or general cosmetics merchant — no equivalent licensing body in Nigeria yet, so this tier never sees prescription-tier content, verified or not
 }
 
 enum BillingCycle {
@@ -78,18 +91,26 @@ enum Role {
 }
 
 model Patient {
-  id           String        @id @default(cuid())
-  firstName    String
-  lastName     String
-  email        String?
-  phone        String
-  dateOfBirth  DateTime?
-  clinicId     String
-  clinic       Clinic        @relation(fields: [clinicId], references: [id])
-  assessments  Assessment[]
-  appointments Appointment[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String?
+  phone         String
+  dateOfBirth   DateTime?
+  biologicalSex BiologicalSex? // Determines whether pregnancy/hormonal-stage questions are shown at all — never used to gate care itself
+  clinicId      String
+  clinic        Clinic        @relation(fields: [clinicId], references: [id])
+  assessments   Assessment[]
+  appointments  Appointment[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum BiologicalSex {
+  FEMALE
+  MALE
+  INTERSEX_OR_OTHER
+  UNDISCLOSED
 }
 
 model Assessment {
@@ -100,17 +121,72 @@ model Assessment {
   staff                   User      @relation(fields: [staffId], references: [id])
   clinicId                String
   clinic                  Clinic    @relation(fields: [clinicId], references: [id])
-  skinType                SkinType
-  concerns                Concern[] // STRICTLY LIMITED TO: ACNE, HYPERPIGMENTATION, SUN_DAMAGE, AGING
+  skinType                SkinType  // Base type, determined from the objective behavior-based
+                                     // questions in the assessment doc — never a raw self-label
+  sensitiveOverlay        Boolean   @default(false) // Reactivity is its own axis, independent of
+                                     // skinType above — an OILY patient can also flag as reactive
+  fitzpatrickType         FitzpatrickType?
+  concerns                Concern[] // STRICTLY LIMITED TO: ACNE, HYPERPIGMENTATION, SUN_DAMAGE,
+                                     // AGING, GLOWING_SKIN
+  severityByConcern       Json?     // e.g. { "ACNE": "MODERATE", "HYPERPIGMENTATION": "MILD" } —
+                                     // keys are Concern values, values are SeverityLevel values
   allergies               String?
+  knownSkinConditions     String?   // free text: doctor-diagnosed eczema, rosacea, psoriasis, etc.
+  currentMedications      String?   // free text — avoids recommending something redundant/conflicting
+  previousTreatments      String?   // free text — avoids re-recommending something already tried
   goals                   String?
   ageRange                AgeRange?
+  // --- Hard-safety fields: read directly by the matching engine's blocking
+  // logic (see matching-engine.ts) before anything else is scored. ---
+  pregnancyStatus         PregnancyStatus @default(NOT_APPLICABLE)
+  hormonalStage           HormonalStage   @default(NOT_APPLICABLE)
+  onHormonalContraceptionOrHRT Boolean    @default(false)
+  cycleRelatedFlares      Boolean   @default(false)
+  hotFlashesOrNightSweats Boolean   @default(false)
+  recentSkinTextureChange Boolean   @default(false)
   recommendedRoutine      Json?
   recommendedIngredients  String[]
   matchedProducts         String[]
   suggestedUpsells        String[]
+  safetyBlockedIngredients String[] @default([]) // Set by the engine — transparency record of what
+                                     // was excluded and why, visible to the dispensing pharmacist
+  escalationNote          String?   // Set by the engine when a verified pharmacy's patient may
+                                     // benefit from prescription-tier intervention — never an
+                                     // instruction to dispense, always framed as "refer/prescribe"
   followUpDate            DateTime?
   createdAt               DateTime  @default(now())
+}
+
+enum SeverityLevel {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+enum PregnancyStatus {
+  PREGNANT
+  BREASTFEEDING
+  TRYING_TO_CONCEIVE
+  NONE
+  NOT_APPLICABLE // e.g. male patients, or undisclosed — never assumed, always asked
+}
+
+enum HormonalStage {
+  PUBERTY
+  REPRODUCTIVE
+  PERIMENOPAUSAL
+  MENOPAUSAL
+  POST_MENOPAUSAL
+  NOT_APPLICABLE
+}
+
+enum FitzpatrickType {
+  TYPE_I
+  TYPE_II
+  TYPE_III
+  TYPE_IV
+  TYPE_V
+  TYPE_VI
 }
 
 enum SkinType {
@@ -126,7 +202,9 @@ enum Concern {
   HYPERPIGMENTATION
   SUN_DAMAGE
   AGING
-} // Hyper-focused on these 4 core concerns only
+  GLOWING_SKIN // General radiance/even-tone maintenance — not a "condition" with
+               // severity tiers like the other 4; routine-complexity based instead
+} // Hyper-focused on these 5 core concerns only
 
 enum AgeRange {
   UNDER_18
@@ -145,7 +223,7 @@ model Product {
   price             Float?
   stockQuantity     Int        @default(0)
   activeIngredients String[]
-  concerns          Concern[] // Matches the 4 core concerns
+  concerns          Concern[] // Matches the 5 core concerns
   isUpsell          Boolean    @default(false)
   clinicId          String
   clinic            Clinic     @relation(fields: [clinicId], references: [id])
@@ -217,15 +295,20 @@ enum NotifType {
   EMAIL
 }
 
-// Dummy rules — will be replaced by the uploaded guide. Only covers the 4 core concerns.
+// Dummy rules — will be replaced by the real rule set (see MASTER_ALGORITHM.md & ASSESSMENT_QUESTIONNAIRE.md). Covers all 5 core concerns.
 model SkincareRule {
-  id           String   @id @default(cuid())
-  name         String
-  condition    Json     // e.g. { concerns: ["ACNE"], skinType: ["OILY"], avoidIngredients: ["retinol"] }
-  routine      Json     // { am: ["Step 1..."], pm: ["Step 2..."] }
-  ingredients  String[]
-  upsells      String[]
-  followUpDays Int      @default(30)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  name                     String
+  condition                Json     // e.g. { concerns: ["ACNE"], skinType: ["OILY"], avoidIngredients: ["retinol"], severity: ["MODERATE","SEVERE"] }
+  routine                  Json     // { am: ["Step 1..."], pm: ["Step 2..."] }
+  ingredients              String[]
+  upsells                  String[]
+  followUpDays             Int      @default(30)
+  requiresLicensedPharmacy Boolean  @default(false) // Only ever a candidate for a Clinic with
+                           // licenseType PHARMACY and a non-null licenseVerifiedAt
+  escalationNote           String?  // Shown alongside the routine when this rule fires — always
+                           // framed as "refer to / requires a licensed prescriber," never a
+                           // dispensing instruction the app is giving on its own
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 }

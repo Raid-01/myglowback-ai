@@ -7,6 +7,22 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 **👉 IMMEDIATE NEXT TASKS:**
 
+0. **Clinical algorithm & assessment questionnaire built — and the sign-up
+   form is now rebuilt around it.** See `MASTER_ALGORITHM.md` and
+   `ASSESSMENT_QUESTIONNAIRE.md` in the repo root for the protocol content
+   and question design. `AssessmentForm.tsx` is now a full multi-step
+   wizard: patient + sex → safety/pregnancy/hormonal screen (branches based
+   on sex, never shown to male patients) → medical history → objective
+   skin-type determination (computed from behavior questions, not
+   self-labeled) → Fitzpatrick self-assessment → concern selection →
+   per-concern severity questions → review & submit. All schema/API/matching
+   -engine support (pregnancy/hormonal safety blocks, Fitzpatrick, severity
+   scoring, the pharmacy-verification gate, GLOWING_SKIN as a 5th concern)
+   is wired end to end from form submission through to the safety-blocking
+   logic. **Not yet done:** the `SkincareRule` table is still running the
+   placeholder dummy data — none of this new intake richness has real
+   ingredient rules to match against yet. That's the next build.
+
 1. **Real root cause found for signup/email flakiness: Neon connection drops, not the email code.**
    Render logs showed repeating `terminating connection due to administrator command` Postgres
    errors, timed almost exactly 5 minutes after boot — that's Neon's free-tier compute

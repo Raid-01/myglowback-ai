@@ -28,6 +28,12 @@ const CONCERNS = [
     routine: ['Vitamin C serum', 'Peptide moisturizer', 'Retinaldehyde night cream', 'Mineral SPF 50'],
     followUp: '60-day follow-up',
   },
+  {
+    key: 'GLOWING_SKIN',
+    label: 'Glowing Skin',
+    routine: ['Gentle cleanser', 'Vitamin C serum', 'Hyaluronic acid + ceramide moisturizer', 'Mineral SPF 30'],
+    followUp: '30-day follow-up',
+  },
 ] as const;
 
 export function ConcernMatcherDemo() {

@@ -11,10 +11,10 @@ export default async function NewAssessmentPage() {
   });
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl">
       <h1 className="font-display text-2xl font-medium text-clinical-text">New Assessment</h1>
       <p className="mt-1 text-sm text-clinical-muted">
-        Matches exclusively against acne, hyperpigmentation, sun damage, and anti-aging.
+        A short guided assessment — acne, hyperpigmentation, sun damage, aging, and general glow.
       </p>
       <div className="mt-6">
         <AssessmentForm patients={patients} />
