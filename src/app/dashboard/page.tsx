@@ -3,7 +3,6 @@ import { Users, ClipboardList, Package, Wallet } from 'lucide-react';
 import { requireSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { StatsCard } from '@/components/StatsCard';
-import { formatNaira } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -26,10 +25,23 @@ export default async function DashboardOverviewPage() {
   ]);
 
   const totalStock = products.reduce((sum, p) => sum + p.stockQuantity, 0);
-  const revenue = await prisma.invoice.aggregate({
-    where: { clinicId, status: 'PAID' },
-    _sum: { amount: true },
+  // What used to sit here summed this clinic's PAID invoices — but every
+  // Invoice row is this clinic paying US for their subscription, not
+  // anything this clinic sold to a patient. Showing that back to a clinic
+  // owner labeled "Revenue" was actively misleading, not just mislabeled.
+  // There's no real sales-tracking model yet (no "sold X to patient Y for
+  // ₦Z" record exists anywhere), so rather than fabricate a number, this
+  // shows something true and still tied to the sales-enablement pitch:
+  // how many product recommendations the app has actually put in front of
+  // this clinic's patients.
+  const recommendationCount = await prisma.assessment.findMany({
+    where: { clinicId },
+    select: { matchedProducts: true, suggestedUpsells: true },
   });
+  const totalRecommendations = recommendationCount.reduce(
+    (sum, a) => sum + a.matchedProducts.length + a.suggestedUpsells.length,
+    0
+  );
 
   return (
     <div>
@@ -42,7 +54,7 @@ export default async function DashboardOverviewPage() {
         <StatsCard label="Total Patients" value={String(patientCount)} icon={Users} />
         <StatsCard label="Assessments" value={String(assessmentCount)} icon={ClipboardList} />
         <StatsCard label="Products in Stock" value={String(totalStock)} icon={Package} />
-        <StatsCard label="Revenue" value={formatNaira(revenue._sum.amount ?? 0)} icon={Wallet} />
+        <StatsCard label="Product Recommendations Made" value={String(totalRecommendations)} icon={Wallet} />
       </div>
 
       <Card className="mt-8">
