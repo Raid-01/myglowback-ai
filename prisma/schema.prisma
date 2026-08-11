@@ -37,6 +37,15 @@ model Clinic {
   professionalLicenseNumber  String?
   licenseVerifiedAt          DateTime?
   licenseVerifiedByEmail     String?
+  // Early-bird / negotiated pricing, per clinic. Null on both fields means
+  // "use today's standard PRICING constant" — this is the normal case.
+  // Set by a Super Admin only (never self-service). Cleared automatically
+  // by the check-subscriptions cron the moment a clinic's subscription
+  // actually lapses — "locked for as long as it stays continuously
+  // active; a lapse means re-signing at whatever the rate is when they
+  // return" (see initiate/route.ts and cron/check-subscriptions/route.ts).
+  lockedAnnualPrice           Float?
+  lockedMonthlyPrice          Float?
   locations         Location[]
   staff             User[]
   patients          Patient[]
@@ -44,6 +53,7 @@ model Clinic {
   invoices          Invoice[]
   assessments       Assessment[]
   notifications     Notification[]
+  feedbackItems     FeedbackItem[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 }
@@ -71,23 +81,63 @@ model Location {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  email        String        @unique
-  password     String?
-  role         Role          @default(STAFF)
-  clinicId     String?
-  clinic       Clinic?       @relation(fields: [clinicId], references: [id])
-  assessments  Assessment[]
-  appointments Appointment[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String?
+  role          Role           @default(STAFF)
+  clinicId      String?
+  clinic        Clinic?        @relation(fields: [clinicId], references: [id])
+  assessments   Assessment[]
+  appointments  Appointment[]
+  feedbackItems FeedbackItem[]
+  feedbackVotes FeedbackVote[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 enum Role {
   SUPER_ADMIN
   CLINIC_ADMIN
   STAFF
+}
+
+// Both CLINIC_ADMIN and STAFF can submit and vote — staff are closest to
+// the day-to-day friction of actually using the tool, admins closer to
+// business-level requests. Feedback is visible across every clinic (not
+// siloed per-clinic) so votes genuinely aggregate into "what's most wanted
+// across the whole user base," not a per-clinic echo chamber.
+model FeedbackItem {
+  id            String         @id @default(cuid())
+  title         String
+  description   String?
+  status        FeedbackStatus @default(OPEN)
+  submittedById String
+  submittedBy   User           @relation(fields: [submittedById], references: [id])
+  clinicId      String
+  clinic        Clinic         @relation(fields: [clinicId], references: [id])
+  votes         FeedbackVote[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model FeedbackVote {
+  id             String       @id @default(cuid())
+  feedbackItemId String
+  feedbackItem   FeedbackItem @relation(fields: [feedbackItemId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([feedbackItemId, userId]) // one vote per person per item — toggle, not stack
+}
+
+enum FeedbackStatus {
+  OPEN
+  PLANNED
+  IN_PROGRESS
+  DONE
+  DECLINED
 }
 
 model Patient {

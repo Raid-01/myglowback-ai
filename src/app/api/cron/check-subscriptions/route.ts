@@ -31,7 +31,18 @@ export async function GET(req: Request) {
     // (this covers both a lapsed trial and a lapsed paid subscription —
     // same field, same cutoff logic, either way)
     if (hasSubscriptionLapsed(clinic.subscriptionEnd)) {
-      await prisma.clinic.update({ where: { id: clinic.id }, data: { isActive: false } });
+      await prisma.clinic.update({
+        where: { id: clinic.id },
+        data: {
+          isActive: false,
+          // "Locked for as long as it stays continuously active" — this is
+          // the actual moment that continuity breaks, so the lock is
+          // cleared here, not just left stale. Re-signing later uses
+          // whatever PRICING says at that time.
+          lockedAnnualPrice: null,
+          lockedMonthlyPrice: null,
+        },
+      });
       deactivated++;
       continue; // an already-lapsed clinic doesn't need reminders
     }

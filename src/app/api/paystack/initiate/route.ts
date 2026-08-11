@@ -13,7 +13,12 @@ export async function POST() {
   }
 
   const clinic = await prisma.clinic.findUniqueOrThrow({ where: { id: session.user.clinicId } });
-  const amount = PRICING[clinic.billingCycle];
+  // A locked price (early-bird or negotiated) always wins over the standard
+  // rate. Both locked fields are null for the normal case, so this falls
+  // straight through to standard pricing for everyone without one.
+  const lockedPrice =
+    clinic.billingCycle === 'ANNUAL' ? clinic.lockedAnnualPrice : clinic.lockedMonthlyPrice;
+  const amount = lockedPrice ?? PRICING[clinic.billingCycle];
   const reference = `MGB-${clinic.id}-${Date.now()}`;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';

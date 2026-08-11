@@ -3,8 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatsCard } from '@/components/StatsCard';
+import { LockedPriceEditor } from '@/components/LockedPriceEditor';
 import { formatNaira } from '@/lib/utils';
 import { Building2, Wallet, ClipboardList, Users } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function SuperAdminPage() {
   await requireRole(['SUPER_ADMIN']);
@@ -13,9 +15,15 @@ export default async function SuperAdminPage() {
     include: {
       _count: { select: { assessments: true, patients: true } },
       invoices: { where: { status: 'PAID' } },
+      assessments: { orderBy: { createdAt: 'desc' }, take: 1, select: { createdAt: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
+
+  function daysSince(date: Date | undefined): number | null {
+    if (!date) return null;
+    return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+  }
 
   const totalRevenue = clinics.reduce(
     (sum, c) => sum + c.invoices.reduce((s, inv) => s + inv.amount, 0),
@@ -26,8 +34,15 @@ export default async function SuperAdminPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-medium text-clinical-text">Super Admin</h1>
-      <p className="mt-1 text-sm text-clinical-muted">Global view across every clinic.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-medium text-clinical-text">Super Admin</h1>
+          <p className="mt-1 text-sm text-clinical-muted">Global view across every clinic.</p>
+        </div>
+        <Link href="/dashboard/super-admin/analytics" className="text-sm font-medium text-sage-700">
+          View analytics →
+        </Link>
+      </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard label="Active Clinics" value={`${activeClinics} / ${clinics.length}`} icon={Building2} />
@@ -51,6 +66,8 @@ export default async function SuperAdminPage() {
               <th className="pb-2">Renews</th>
               <th className="pb-2">Revenue</th>
               <th className="pb-2">Assessments</th>
+              <th className="pb-2">Last Active</th>
+              <th className="pb-2">Locked Rate</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-clinical-border">
@@ -75,6 +92,30 @@ export default async function SuperAdminPage() {
                   {formatNaira(c.invoices.reduce((s, inv) => s + inv.amount, 0))}
                 </td>
                 <td className="py-3 text-clinical-text">{c._count.assessments}</td>
+                <td className="py-3">
+                  {(() => {
+                    const days = daysSince(c.assessments[0]?.createdAt);
+                    if (days === null) {
+                      return c.isTrialing ? (
+                        <span className="text-xs text-honey-700">No assessments yet</span>
+                      ) : (
+                        <span className="text-xs text-danger">Never — activation risk</span>
+                      );
+                    }
+                    return (
+                      <span className={days > 14 ? 'text-xs font-medium text-danger' : 'text-xs text-clinical-text'}>
+                        {days === 0 ? 'Today' : `${days}d ago`}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td className="py-3">
+                  <LockedPriceEditor
+                    clinicId={c.id}
+                    initialAnnual={c.lockedAnnualPrice}
+                    initialMonthly={c.lockedMonthlyPrice}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

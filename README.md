@@ -7,6 +7,30 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 **👉 IMMEDIATE NEXT TASKS:**
 
+0. **Paystack is live and confirmed working** — test payments went through end to end.
+0. **Three new features built: locked per-clinic pricing, a feedback board, and Super Admin
+   analytics.**
+   - **Locked pricing:** `Clinic` now has `lockedAnnualPrice`/`lockedMonthlyPrice` — null means
+     "use today's standard rate" (the normal case). A Super Admin sets these per clinic from the
+     Super Admin page (inline editor next to each clinic row). Checkout (`/api/paystack/initiate`)
+     uses the locked price when one's set. The `check-subscriptions` cron clears both fields the
+     moment a subscription actually lapses — "locked as long as continuously active; a lapse means
+     re-signing at the current rate" is enforced right where lapse itself is detected, not left as
+     a manual step.
+   - **Feedback board:** `/dashboard/feedback` — both Clinic Admins and Staff can submit and
+     upvote (staff are closest to the day-to-day friction of the tool, worth hearing from
+     directly). Visible across every clinic, not siloed — votes genuinely aggregate into "most
+     wanted across the whole user base." One vote per person per item, toggleable.
+   - **Super Admin analytics:** `/dashboard/super-admin/analytics` — trial→paid conversion rate,
+     estimated MRR (accounts for locked rates), signups/assessments per week (last 8 weeks), and a
+     "signed up, never ran an assessment" list — the clearest available "is this actually working
+     for them" signal without needing to ask anyone directly. The main Super Admin clinic table
+     also now shows a "Last Active" column highlighting clinics quiet for 14+ days — an early
+     churn-risk signal, not a stated reason. **Honest limitation, noted directly on the page
+     itself:** these are behavioral signals, not a real churn survey — a "why are you cancelling?"
+     prompt at the point of lapse would be the natural next addition once this is in active use.
+   **Not yet done:** no automated report/export exists yet beyond the on-screen dashboard.
+
 0. **Clinical algorithm & assessment questionnaire built, real rule data
    loaded — and the sign-up form is rebuilt around it.** See
    `MASTER_ALGORITHM.md` and `ASSESSMENT_QUESTIONNAIRE.md` in the repo root.
