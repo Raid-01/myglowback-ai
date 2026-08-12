@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatsCard } from '@/components/StatsCard';
 import { LockedPriceEditor } from '@/components/LockedPriceEditor';
+import { LicenseVerificationEditor } from '@/components/LicenseVerificationEditor';
 import { formatNaira } from '@/lib/utils';
 import { Building2, Wallet, ClipboardList, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -67,6 +68,7 @@ export default async function SuperAdminPage() {
               <th className="pb-2">Revenue</th>
               <th className="pb-2">Assessments</th>
               <th className="pb-2">Last Active</th>
+              <th className="pb-2">License</th>
               <th className="pb-2">Locked Rate</th>
             </tr>
           </thead>
@@ -108,6 +110,14 @@ export default async function SuperAdminPage() {
                       </span>
                     );
                   })()}
+                </td>
+                <td className="py-3">
+                  <LicenseVerificationEditor
+                    clinicId={c.id}
+                    initialLicenseType={c.licenseType}
+                    initialVerified={c.licenseVerifiedAt !== null}
+                    initialLicenseNumber={c.professionalLicenseNumber}
+                  />
                 </td>
                 <td className="py-3">
                   <LockedPriceEditor

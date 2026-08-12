@@ -5,7 +5,20 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 ## Current status (update this as things change)
 
-**👉 IMMEDIATE NEXT TASKS:**
+0. **Dashboard revenue stat fixed, pharmacy-verification editor added, role-based test plan
+   written.** The clinic-facing Overview page was summing that clinic's own PAID invoices —
+   which are payments *to* MyGlowBack.AI for their subscription — and mislabeling it "Revenue,"
+   actively misleading a clinic owner into thinking it was their own sales. Replaced with an
+   honest "Product Recommendations Made" count. **Real gap surfaced by this:** there's no actual
+   sales-tracking model anywhere (nothing records a clinic selling a product to a patient) — a
+   real future feature, not built yet. Separately: there was no UI at all for a Super Admin to
+   verify a clinic as a licensed pharmacy — `licenseVerifiedAt` was readable by the matching
+   engine but nothing could ever set it, which meant the pharmacy-tier safety-gate test scenarios
+   couldn't actually be run end-to-end. Fixed with a small editor on the Super Admin page (same
+   pattern as the locked-price one) — set license type, enter a PCN number, verify. See
+   `TEST_SCENARIOS.md`'s new "Role-Based Access" section for the full Super
+   Admin/Clinic Admin/Staff testing checklist, including the one test worth the most care:
+   confirming one clinic can never see another clinic's patient data by guessing a URL.
 
 0. **Paystack is live and confirmed working** — test payments went through end to end.
 0. **Three new features built: locked per-clinic pricing, a feedback board, and Super Admin

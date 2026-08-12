@@ -114,7 +114,45 @@ silently dropped.
 
 ---
 
-## After testing: what a failure actually means
+## Priority 1 — Role-Based Access (Super Admin / Clinic Admin / Staff)
+
+Three roles exist, flat — no sub-levels within Staff. This section tests
+*who can see and do what*, at two levels that matter separately: whether
+the nav even shows the option (cosmetic), and whether the underlying page
+or API route actually blocks it if someone tries the direct URL anyway
+(the real security boundary).
+
+**Two things confirmed while building this checklist, worth knowing before
+you start:**
+- **Billing and Inventory pages already enforce `CLINIC_ADMIN`-only at the
+  server level**, not just by hiding the nav link — confirmed directly in
+  the code. A Staff account hitting those URLs directly should get blocked,
+  not just fail to see the link.
+- **There's currently no UI to actually mark a clinic as a verified
+  pharmacy** — `licenseVerifiedAt` is read by the matching engine, but
+  nothing anywhere lets a Super Admin *set* it yet. This means scenarios
+  #7–9 above (the pharmacy-verification-gate tests) can't actually be run
+  end-to-end through the app right now — only by editing the database
+  directly in Neon's SQL Editor, the same way we cleared test clinics
+  earlier. Worth building a small editor for this (same pattern as the
+  locked-price one) before those specific scenarios can be properly tested.
+
+| # | Role | Test | What should happen |
+|---|---|---|---|
+| 37 | Super Admin | Log in, check the nav | Should see "Super Admin" — worth checking whether Overview/New Assessment/Patients/etc. also show, since a Super Admin typically has no `clinicId` of their own |
+| 38 | Super Admin | Visit `/dashboard` (the normal Overview page) directly | This page assumes a `clinicId` exists — if a pure Super Admin account has none, confirm this doesn't crash or show broken data rather than a sensible empty/redirect state |
+| 39 | Super Admin | Set a locked price on a clinic, then check that clinic's checkout | The locked amount should be what Paystack actually charges, not the standard rate |
+| 40 | Super Admin | Visit `/dashboard/super-admin/analytics` | Loads the KPI dashboard — conversion rate, MRR, weekly trends, never-activated list |
+| 41 | Clinic Admin | Try visiting `/dashboard/super-admin` directly by typing the URL | Should be blocked, not just missing from nav — this is the real test, not whether the link shows |
+| 42 | Clinic Admin | Try calling the locked-price API directly (e.g. via browser dev tools) | Should be rejected — only `SUPER_ADMIN` may set locked pricing |
+| 43 | Clinic Admin | Check Inventory and Billing both work normally | Full access, as expected |
+| 44 | Staff | Try visiting `/dashboard/billing` and `/dashboard/inventory` directly | Confirmed server-enforced — should be blocked outright, not just hidden from nav |
+| 45 | Staff | Run a full assessment end to end | Should work fully — this is Staff's core job, no restriction expected here |
+| 46 | Staff | Visit `/dashboard/feedback` | Should work — Staff can submit and vote, same as Clinic Admin |
+| 47 | Any role | Try to view another clinic's patient, assessment, or invoice by guessing/editing the URL's ID | Should be blocked — every query is meant to be scoped to the logged-in user's own `clinicId`. This is the single most important test in this whole section: a leak here means one clinic could see another's patient data |
+| 48 | Any role | Log in from an inactive/lapsed clinic (`isActive: false`) | Staff and Clinic Admin should hit the lockout screen. Confirm Super Admin is *not* similarly locked out — they need to be able to work with lapsed clinics (e.g. to review or reactivate them) |
+
+**The one to spend the most care on is #47.** Everything else here is about UI polish and role boundaries; that one is about whether one clinic could ever see another clinic's real patient data. Worth deliberately trying to break it, not just casually clicking around.
 
 - **A Priority 1 failure is a stop-everything bug** — it means an unsafe
   ingredient could reach a real patient, or the pharmacy gate can be
