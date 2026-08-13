@@ -54,6 +54,7 @@ model Clinic {
   assessments       Assessment[]
   notifications     Notification[]
   feedbackItems     FeedbackItem[]
+  sales             Sale[]
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 }
@@ -92,6 +93,7 @@ model User {
   appointments  Appointment[]
   feedbackItems FeedbackItem[]
   feedbackVotes FeedbackVote[]
+  sales         Sale[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -152,6 +154,7 @@ model Patient {
   clinic        Clinic        @relation(fields: [clinicId], references: [id])
   assessments   Assessment[]
   appointments  Appointment[]
+  sales         Sale[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -204,6 +207,7 @@ model Assessment {
                                      // benefit from prescription-tier intervention — never an
                                      // instruction to dispense, always framed as "refer/prescribe"
   followUpDate            DateTime?
+  sales                   Sale[]
   createdAt               DateTime  @default(now())
 }
 
@@ -277,6 +281,7 @@ model Product {
   isUpsell          Boolean    @default(false)
   clinicId          String
   clinic            Clinic     @relation(fields: [clinicId], references: [id])
+  sales             Sale[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 }
@@ -345,7 +350,30 @@ enum NotifType {
   EMAIL
 }
 
-// Dummy rules — will be replaced by the real rule set (see MASTER_ALGORITHM.md & ASSESSMENT_QUESTIONNAIRE.md). Covers all 5 core concerns.
+// The real revenue-tracking gap: nothing anywhere recorded "this clinic
+// sold X to patient Y for ₦Z" until now. Deliberately keeps a snapshot of
+// productName rather than only a productId — if a product gets renamed or
+// removed from inventory later, historical sales records should still read
+// correctly, not break or go blank.
+model Sale {
+  id           String      @id @default(cuid())
+  clinicId     String
+  clinic       Clinic      @relation(fields: [clinicId], references: [id])
+  patientId    String?
+  patient      Patient?    @relation(fields: [patientId], references: [id])
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id])
+  productId    String?
+  product      Product?    @relation(fields: [productId], references: [id])
+  productName  String
+  quantity     Int         @default(1)
+  amount       Float       // total for this line, not unit price
+  recordedById String
+  recordedBy   User        @relation(fields: [recordedById], references: [id])
+  createdAt    DateTime    @default(now())
+}
+
+// Real rule content, from MASTER_ALGORITHM.md & ASSESSMENT_QUESTIONNAIRE.md.
 model SkincareRule {
   id                       String   @id @default(cuid())
   name                     String   @unique // lets the seed script safely replace rules on re-run

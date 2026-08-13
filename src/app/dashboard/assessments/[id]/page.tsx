@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RecordSaleButton } from '@/components/RecordSaleButton';
 import { formatNaira } from '@/lib/utils';
 
 export default async function AssessmentDetailPage({ params }: { params: { id: string } }) {
@@ -101,7 +102,16 @@ export default async function AssessmentDetailPage({ params }: { params: { id: s
             {matchedProducts.map((p) => (
               <li key={p.id} className="flex items-center justify-between py-2.5 text-sm">
                 <span className="text-clinical-text">{p.name}</span>
-                <span className="text-clinical-muted">{p.price ? formatNaira(p.price) : '—'}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-clinical-muted">{p.price ? formatNaira(p.price) : '—'}</span>
+                  <RecordSaleButton
+                    patientId={assessment.patient.id}
+                    assessmentId={assessment.id}
+                    productId={p.id}
+                    productName={p.name}
+                    defaultPrice={p.price}
+                  />
+                </div>
               </li>
             ))}
           </ul>

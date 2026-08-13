@@ -3,6 +3,7 @@ import { Users, ClipboardList, Package, Wallet } from 'lucide-react';
 import { requireSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { StatsCard } from '@/components/StatsCard';
+import { formatNaira } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -25,23 +26,18 @@ export default async function DashboardOverviewPage() {
   ]);
 
   const totalStock = products.reduce((sum, p) => sum + p.stockQuantity, 0);
-  // What used to sit here summed this clinic's PAID invoices — but every
-  // Invoice row is this clinic paying US for their subscription, not
-  // anything this clinic sold to a patient. Showing that back to a clinic
-  // owner labeled "Revenue" was actively misleading, not just mislabeled.
-  // There's no real sales-tracking model yet (no "sold X to patient Y for
-  // ₦Z" record exists anywhere), so rather than fabricate a number, this
-  // shows something true and still tied to the sales-enablement pitch:
-  // how many product recommendations the app has actually put in front of
-  // this clinic's patients.
-  const recommendationCount = await prisma.assessment.findMany({
-    where: { clinicId },
-    select: { matchedProducts: true, suggestedUpsells: true },
+  // Used to sum this clinic's PAID invoices — but every Invoice row is this
+  // clinic paying US for their subscription, not anything sold to a
+  // patient. That was actively misleading labeled "Revenue." A real Sale
+  // model exists now (see /dashboard/revenue for the full report with a
+  // custom date range) — this just needs today's slice of it.
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todaysSales = await prisma.sale.findMany({
+    where: { clinicId, createdAt: { gte: startOfToday } },
+    select: { amount: true },
   });
-  const totalRecommendations = recommendationCount.reduce(
-    (sum, a) => sum + a.matchedProducts.length + a.suggestedUpsells.length,
-    0
-  );
+  const todaysRevenue = todaysSales.reduce((sum, s) => sum + s.amount, 0);
 
   return (
     <div>
@@ -54,7 +50,9 @@ export default async function DashboardOverviewPage() {
         <StatsCard label="Total Patients" value={String(patientCount)} icon={Users} />
         <StatsCard label="Assessments" value={String(assessmentCount)} icon={ClipboardList} />
         <StatsCard label="Products in Stock" value={String(totalStock)} icon={Package} />
-        <StatsCard label="Product Recommendations Made" value={String(totalRecommendations)} icon={Wallet} />
+        <a href="/dashboard/revenue">
+          <StatsCard label="Today's Revenue" value={formatNaira(todaysRevenue)} icon={Wallet} />
+        </a>
       </div>
 
       <Card className="mt-8">

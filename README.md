@@ -5,8 +5,13 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 ## Current status (update this as things change)
 
-0. **Dashboard revenue stat fixed, pharmacy-verification editor added, role-based test plan
-   written.** The clinic-facing Overview page was summing that clinic's own PAID invoices —
+0. **Real sales tracking built — replaces the placeholder "Product Recommendations Made" stat.**
+   New `Sale` model actually records "sold X to patient Y for ₦Z." Staff record a sale directly
+   from a patient's assessment page (next to each matched product — "Record sale" → quantity +
+   amount → save). Overview now shows **today's real revenue**, linking through to
+   `/dashboard/revenue` — a full report with a daily breakdown and a custom date-range picker (two
+   plain date inputs, no JS needed). This is the actual "daily ROI" view. Schema fully audited
+   line-by-line after this round of edits — all 13 models confirmed intact and correctly related. The clinic-facing Overview page was summing that clinic's own PAID invoices —
    which are payments *to* MyGlowBack.AI for their subscription — and mislabeling it "Revenue,"
    actively misleading a clinic owner into thinking it was their own sales. Replaced with an
    honest "Product Recommendations Made" count. **Real gap surfaced by this:** there's no actual
