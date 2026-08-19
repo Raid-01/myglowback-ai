@@ -65,7 +65,12 @@ export async function POST(req: Request) {
       await prisma.$transaction([
         prisma.clinic.update({
           where: { id: clinicId },
-          data: { subscriptionEnd: newEnd, isActive: true, isTrialing: false },
+          // billingCycle is updated here too, not just subscriptionEnd —
+          // the renew flow can now charge a different cycle than whatever
+          // was previously stored (picking "yearly" at renewal time even
+          // if the clinic was on monthly), so the stored value needs to
+          // track whatever was actually just paid for, not go stale.
+          data: { subscriptionEnd: newEnd, isActive: true, isTrialing: false, billingCycle },
         }),
         prisma.invoice.create({
           data: {

@@ -84,24 +84,28 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['HYPERPIGMENTATION'], severity: ['MODERATE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Ferulic Acid serum', 'Niacinamide moisturizer', 'Tinted SPF 50+ with iron oxides — non-negotiable'],
-        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum', 'Moisturizer'],
+        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum, OR Hydroquinone 2% (OTC ceiling — max 3–4 months continuous use)', 'Moisturizer'],
       },
-      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Niacinamide', 'Vitamin C'],
+      // Hydroquinone here means this rule is correctly excluded by the
+      // matching engine's hard-safety filter for pregnancy/breastfeeding/
+      // TTC/under-18 patients — they fall back to the Azelaic-based Mild
+      // rule automatically, which contains no blocked ingredients.
+      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Hydroquinone 2%', 'Niacinamide', 'Vitamin C'],
       upsells: ['Tranexamic Acid Dark Spot Serum'],
       followUpDays: 56,
-      escalationNote: 'If no improvement after 12–16 weeks, may benefit from prescription-strength intervention — refer for pharmacy/dermatologist evaluation.',
+      escalationNote: 'If no improvement after 12–16 weeks, may benefit from prescription-strength (>2%) intervention — refer for pharmacy/dermatologist evaluation.',
     },
     {
       name: 'Hyperpigmentation — Severe',
       condition: { concerns: ['HYPERPIGMENTATION'], severity: ['SEVERE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Ferulic Acid serum', 'Niacinamide moisturizer', 'Tinted SPF 50+ with iron oxides — non-negotiable'],
-        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum', 'Moisturizer'],
+        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum, OR Hydroquinone 2% (OTC ceiling — max 3–4 months continuous use)', 'Moisturizer'],
       },
-      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Niacinamide', 'Vitamin C'],
+      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Hydroquinone 2%', 'Niacinamide', 'Vitamin C'],
       upsells: ['Tranexamic Acid Dark Spot Serum'],
       followUpDays: 30,
-      escalationNote: 'Severe/widespread pigmentation, possibly melasma — this OTC combination is a starting point, not the ceiling. May benefit from prescription-strength intervention — requires assessment and prescription from a licensed physician before dispensing.',
+      escalationNote: 'Severe/widespread pigmentation, possibly melasma — 2% hydroquinone or this Azelaic/Tranexamic combination are both reasonable OTC starting points, not necessarily the ceiling. May benefit from above-2% prescription-strength intervention if unresponsive — requires assessment and prescription from a licensed physician before dispensing.',
     },
     {
       name: 'Hyperpigmentation — Severe (Pharmacy-Verified)',
@@ -114,7 +118,7 @@ export const rules: SkincareRuleData[] = [
       upsells: ['Tranexamic Acid Dark Spot Serum'],
       followUpDays: 30,
       requiresLicensedPharmacy: true,
-      escalationNote: 'Severe/widespread pigmentation, possibly melasma. Prescription-tier options a physician may consider: short-course 4% hydroquinone, or a compounded triple-combination formula (hydroquinone + tretinoin + a mild corticosteroid) — never dispensed without a valid prescription and physician supervision, and never continuous beyond 3–4 months.',
+      escalationNote: 'Severe/widespread pigmentation, possibly melasma, not responding to 2% OTC hydroquinone or the Azelaic/Tranexamic combination. Above-2% prescription-tier options a physician may consider: 4% hydroquinone short-course, or a compounded triple-combination formula (hydroquinone + tretinoin + a mild corticosteroid) — never dispensed without a valid prescription and physician supervision, and never continuous beyond 3–4 months.',
     },
     // --- SUN DAMAGE --- (nothing here is on any blocklist, so no
     // pregnancy-safe variant is needed)

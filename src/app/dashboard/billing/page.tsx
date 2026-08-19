@@ -4,6 +4,7 @@ import { daysUntilInLagos } from '@/lib/date';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BillingActions } from '@/components/BillingActions';
+import { PRICING } from '@/lib/paystack';
 import { formatNaira } from '@/lib/utils';
 import { Download } from 'lucide-react';
 
@@ -127,6 +128,8 @@ export default async function BillingPage({
             canSwitchCycle={daysUntilExpiry <= 10}
             daysUntilExpiry={daysUntilExpiry}
             isTrialing={clinic.isTrialing}
+            annualPrice={clinic.lockedAnnualPrice ?? PRICING.ANNUAL}
+            monthlyPrice={clinic.lockedMonthlyPrice ?? PRICING.MONTHLY}
           />
         </Card>
       </div>

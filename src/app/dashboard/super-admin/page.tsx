@@ -40,9 +40,14 @@ export default async function SuperAdminPage() {
           <h1 className="font-display text-2xl font-medium text-clinical-text">Super Admin</h1>
           <p className="mt-1 text-sm text-clinical-muted">Global view across every clinic.</p>
         </div>
-        <Link href="/dashboard/super-admin/analytics" className="text-sm font-medium text-sage-700">
-          View analytics →
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/super-admin/rules" className="text-sm font-medium text-sage-700">
+            Edit skincare rules →
+          </Link>
+          <Link href="/dashboard/super-admin/analytics" className="text-sm font-medium text-sage-700">
+            View analytics →
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

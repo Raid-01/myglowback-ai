@@ -5,7 +5,30 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
 
 ## Current status (update this as things change)
 
-0. **Real sales tracking built — replaces the placeholder "Product Recommendations Made" stat.**
+0. **Hydroquinone correction confirmed and propagated everywhere.** Re-verified directly against
+   Nigeria's Minister of Health's own on-record 2025 statement plus a July 2026 industry source:
+   2% hydroquinone is genuinely OTC in Nigeria — my earlier "prescription-tier only" framing was
+   too conservative. `rules-data.ts` and `MASTER_ALGORITHM.md` already had this corrected from
+   earlier in this project; the real gap found was that `seed-rules.sql` — the file actually
+   pasted into Neon — was **stale**, generated before that correction. Regenerated. **If you
+   already ran the old version of that file, re-run the new one** to get 2% hydroquinone into the
+   live rule set.
+0. **`AssessmentForm.tsx` refactored** — 882 lines down to a 203-line orchestrator. All scoring
+   math moved to `src/lib/assessment-scoring.ts` (pure functions, no UI), the reusable
+   choice-button UI promoted to `src/components/ui/choice-group.tsx`, and each of the 8 questions
+   now lives in its own file under `src/components/assessment-steps/`. To change one question,
+   open its one file — nothing else needs understanding first.
+0. **Rule-editing admin UI built** — `/dashboard/super-admin/rules`. Sade can now create, edit,
+   and delete the actual clinical routines (concerns, severity, skin type, morning/evening steps,
+   ingredients, upsells, the pharmacy-tier gate, escalation notes) through a guided form — no
+   code, no JSON, changes go live immediately. Multi-line textareas split into arrays
+   automatically (one item per line).
+0. **Billing "Renew Now" flow rebuilt.** Clicking it now reveals the Annual plan immediately,
+   highlighted, with the amount saved vs. monthly stated explicitly, going straight to Paystack
+   checkout for that cycle on click. A secondary "I prefer the monthly plan" link sits below it,
+   going straight to Paystack for monthly instead. `/api/paystack/initiate` now accepts an
+   explicit `billingCycle` override so this works without a separate "switch cycle" step first;
+   the webhook now also keeps `clinic.billingCycle` in sync with whatever was actually paid for.
    New `Sale` model actually records "sold X to patient Y for ₦Z." Staff record a sale directly
    from a patient's assessment page (next to each matched product — "Record sale" → quantity +
    amount → save). Overview now shows **today's real revenue**, linking through to

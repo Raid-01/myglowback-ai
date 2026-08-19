@@ -10,13 +10,23 @@ original submission and why.
 
 ## Editorial Summary — What Changed and Why
 
-1. **Hydroquinone reclassified as prescription-tier, not OTC-recommendable.**
-   NAFDAC's own public guidance states hydroquinone is prohibited in
-   cosmetic products and permitted only as a prescription medicine under
-   medical supervision. The app's self-service assessment now never
-   recommends it directly — it appears only as an *escalation note* for
-   verified-pharmacy clinics, framed as "may benefit from prescription-tier
-   intervention," never as a dispensing instruction.
+1. **Hydroquinone correction (revised from an earlier, overly-conservative
+   read): 2% is the legal OTC ceiling in Nigeria, not a full ban.**
+   Multiple current, independent sources — including a NAFDAC state
+   coordinator's own July 2025 statement and a July 2026 industry
+   article — consistently confirm NAFDAC's 2019 Cosmetic Products
+   (Prohibition of Bleaching Agents) Regulations cap hydroquinone at 2% for
+   OTC cosmetic sale, not prohibit it entirely. Only concentrations *above*
+   2% (4% hydroquinone, and Kligman's/triple-combination formulas, which
+   also always involve prescription-only tretinoin regardless of HQ
+   strength) need the prescription-tier gate. Hydroquinone at ≤2% is now a
+   real OTC-tier recommendation option for hyperpigmentation, alongside
+   Azelaic Acid and Tranexamic Acid — not a mandatory swap-out for them.
+   **This does not change the pregnancy/breastfeeding/trying-to-conceive
+   and under-18 blocks below** — those exclude hydroquinone at any
+   concentration regardless of the OTC/Rx line, for unrelated safety
+   reasons (insufficient pregnancy safety data; not appropriate for
+   minors).
 2. **Kojic acid capped at 1%** in every OTC-tier rule, matching NAFDAC's
    Cosmetic Products (Prohibition of Bleaching Agents) Regulations 2019.
    Concentrations above that require the same prescription-tier framing as
@@ -79,9 +89,14 @@ Nigeria:
   write the prescription, and the pharmacist still dispenses against it.
   The app is never the prescriber.
 
-Ingredients currently gated to prescription-tier-only: **Hydroquinone at any
-concentration**, **Kojic acid above 1%**, and the **triple/quadruple
-combination creams** (Kligman's formula and variants) described in Section 2.
+Ingredients currently gated to prescription-tier-only: **Hydroquinone above
+2%**, **Kojic acid above 1%**, and the **triple/quadruple combination
+creams** (Kligman's formula and variants — always prescription-tier
+regardless of HQ strength, since they also contain prescription-only
+tretinoin) described in Section 2. Hydroquinone at ≤2% and kojic acid at
+≤1% are OTC-tier, same as any other evidence-based ingredient in this
+document — subject to the same pregnancy/breastfeeding/TTC/under-18 hard
+blocks as everything else with a real safety concern for those groups.
 
 ---
 
@@ -152,10 +167,10 @@ combination creams** (Kligman's formula and variants) described in Section 2.
 
 | Ingredient | Concentration | Duration | Mechanism | Key Notes |
 |---|---|---|---|---|
-| **Hydroquinone** | **Prescription-tier only — see Section 0** | 6–12 weeks | Tyrosinase inhibitor | **[CORRECTED]** Not OTC-recommendable in Nigeria — NAFDAC prohibits it in cosmetic products; permitted only as a prescription medicine under medical supervision. App surfaces as an escalation note to verified pharmacies only, never as a direct recommendation. Even where prescribed, no more than 3–4 months continuous use |
+| **Hydroquinone** | **2% — OTC. Above 2% (incl. 4%): prescription-tier only — see Section 0** | 6–12 weeks | Tyrosinase inhibitor | **[CORRECTED]** 2% is NAFDAC's actual OTC ceiling, confirmed directly by a NAFDAC state coordinator (July 2025) — not a full ban as an earlier version of this document stated. No more than 3–4 months continuous use even at 2%. Still hard-blocked for pregnancy/breastfeeding/TTC and under-18 regardless of concentration |
 | Tretinoin | 0.025–0.1% | 6–12 weeks | Increases turnover; enhances penetration | Prescription only |
 | Adapalene | 0.1% or 0.3% | 6–12 weeks | Increases turnover | OTC at 0.1% |
-| Azelaic Acid | 10% OTC / 15% Rx | 8–12 weeks | Tyrosinase inhibitor; anti-inflammatory | **Primary OTC recommendation for hyperpigmentation** given the hydroquinone restriction above. Excellent for hyperpigmentation + acne |
+| Azelaic Acid | 10% OTC / 15% Rx | 8–12 weeks | Tyrosinase inhibitor; anti-inflammatory | A strong OTC option alongside 2% Hydroquinone — gentler, and the only one of the two that's also safe for the pregnancy/breastfeeding/TTC-excluded population. Excellent for hyperpigmentation + acne |
 | Tranexamic Acid | 3–5% topical | 8–16 weeks | Inhibits plasminogen activator | Often combined with Azelaic + Niacinamide. Oral form requires prescription (thrombosis risk) |
 | Niacinamide | 4–5% | 4–8 weeks | Inhibits melanosome transfer | Works synergistically with other actives |
 | **Kojic Acid** | **1% maximum (OTC)** | 8–12 weeks | Tyrosinase inhibitor | **[CORRECTED]** NAFDAC caps kojic acid at 1% in cosmetic products. Concentrations above 1% are prescription-tier |
@@ -194,7 +209,7 @@ combination creams** (Kligman's formula and variants) described in Section 2.
 
 | Situation | Action |
 |---|---|
-| Any hydroquinone consideration | **Route to prescription-tier escalation note; never recommend directly, regardless of clinic type** |
+| Hydroquinone above 2%, or any triple-combination formula | **Route to prescription-tier escalation note; never recommend directly, regardless of clinic type.** 2% itself is a normal OTC option, same handling as any other ingredient in this table |
 | Kojic acid above 1% | Same — prescription-tier only |
 | Pregnancy/breastfeeding | No hydroquinone, no retinoids. Azelaic Acid and Vitamin C are safe |
 | Sensitive skin | Avoid Kojic Acid; use Azelaic Acid, Niacinamide, or Licorice Root Extract |
@@ -402,13 +417,13 @@ which.
 
 | Life Stage | Key Considerations | Recommended Actives | Avoid |
 |---|---|---|---|
-| Puberty | PIH from acne | Azelaic Acid, Alpha Arbutin, Niacinamide | Hydroquinone (not appropriate for minors, also prescription-tier per Section 0) |
-| Reproductive Years | Melasma, PIH, sun damage | Azelaic Acid, Tranexamic Acid, Vitamin C; **hydroquinone → escalation note only, per Section 0** | — |
+| Puberty | PIH from acne | Azelaic Acid, Alpha Arbutin, Niacinamide | Hydroquinone at any concentration (not appropriate for minors — unrelated to the OTC/Rx line, an absolute exclusion for this age group) |
+| Reproductive Years | Melasma, PIH, sun damage | Azelaic Acid, Hydroquinone 2% (OTC), Tranexamic Acid, Vitamin C; **above 2% → escalation note only** | — |
 | Pregnancy | Melasma very common | Azelaic Acid, Vitamin C, Niacinamide — safe | Hydroquinone, retinoids, high-strength peels, oral tranexamic acid |
 | Breastfeeding | Melasma may persist | Azelaic Acid, Vitamin C, Niacinamide, Alpha Arbutin | Hydroquinone, retinoids |
-| Perimenopause | May worsen; skin drier | Tranexamic Acid, Vitamin C, Retinoids if not pregnant; **hydroquinone → escalation note only** | Aggressive peels |
-| Menopause | May worsen | Tranexamic Acid, Vitamin C, Retinoids; **hydroquinone → escalation note only** | Aggressive exfoliation |
-| Post-Menopause | Stubborn; skin fragile | Vitamin C, Niacinamide, low-concentration Retinoids; **hydroquinone → escalation note only, short-term if ever used** | Aggressive peels |
+| Perimenopause | May worsen; skin drier | Tranexamic Acid, Hydroquinone 2%, Vitamin C, Retinoids if not pregnant; **above 2% → escalation note only** | Aggressive peels |
+| Menopause | May worsen | Tranexamic Acid, Hydroquinone 2%, Vitamin C, Retinoids; **above 2% → escalation note only** | Aggressive exfoliation |
+| Post-Menopause | Stubborn; skin fragile | Vitamin C, Niacinamide, Hydroquinone 2% short-term, low-concentration Retinoids; **above 2% → escalation note only** | Aggressive peels |
 
 ### Hormonal Shifts & Skincare
 
@@ -530,7 +545,7 @@ questions and scoring.
 | Condition | Core Ingredients | Additional Evidence-Based Ingredients | Regulatory Note |
 |---|---|---|---|
 | Acne | Benzoyl Peroxide, Adapalene, Salicylic Acid, Azelaic Acid | Niacinamide, Dapsone, Glycolic Acid, Tazarotene, Trifarotene | None |
-| Hyperpigmentation | Azelaic Acid, Vitamin C, Niacinamide, Alpha Arbutin, Licorice Root | Tranexamic Acid, 4-Butylresorcinol, UPA, Glutathione, Cysteamine, Ferulic Acid | **Hydroquinone & Kojic Acid >1%: prescription-tier only** |
+| Hyperpigmentation | Azelaic Acid, Hydroquinone (≤2%), Vitamin C, Niacinamide, Alpha Arbutin, Licorice Root | Tranexamic Acid, 4-Butylresorcinol, UPA, Glutathione, Cysteamine, Ferulic Acid | **Hydroquinone >2% & Kojic Acid >1%: prescription-tier only** |
 | Sun Damage | Sunscreen (SPF 30+), Vitamin C | Photolyase, Vitamin E, Niacinamide, Baicalin, Fenugreek, Green Tea, Resveratrol | None |
 | Ageing Gracefully | Retinoids, Vitamin C | Peptides, CoQ10, Bakuchiol, EGCG, Curcumin, Hyaluronic Acid, Ceramides | None |
 | Glowing Skin | Clean/Nourish/Moisturise/Protect/Pamper/Treat framework | Ceramides, Niacinamide, Hyaluronic Acid, Collagen, Zinc, Glycerin, Panthenol | None |
