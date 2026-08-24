@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { Label } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -28,21 +29,26 @@ export function ChoiceGroup({
       <Label>{label}</Label>
       {hint && <p className="mb-2 -mt-1 text-xs text-clinical-muted">{hint}</p>}
       <div className={cn('grid gap-2', GRID_COLS[columns] ?? GRID_COLS[1])}>
-        {options.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onChange(o.value)}
-            className={cn(
-              'rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-colors',
-              value === o.value
-                ? 'border-sage-500 bg-sage-50 text-sage-800'
-                : 'border-clinical-border bg-white text-clinical-text hover:bg-ivory-100'
-            )}
-          >
-            {o.label}
-          </button>
-        ))}
+        {options.map((o) => {
+          const selected = value === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                'flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left text-sm font-medium transition-all active:scale-[0.98]',
+                selected
+                  ? 'border-sage-600 bg-sage-600 text-white shadow-soft'
+                  : 'border-clinical-border bg-white text-clinical-text hover:border-sage-300 hover:bg-sage-50'
+              )}
+            >
+              {o.label}
+              {selected && <Check size={15} strokeWidth={2.5} className="shrink-0" />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

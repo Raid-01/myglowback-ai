@@ -3,6 +3,21 @@
 B2B SaaS skincare recommendation engine for clinics — built from your spec with Next.js 14
 (App Router), Prisma + PostgreSQL, NextAuth, and Paystack.
 
+## Documentation hygiene — a standing rule, not a suggestion
+
+**Whenever a feature moves from "planned"/"not yet built" to actually done, search every
+doc in this repo for other mentions of that same status before considering the task finished.**
+This project has repeatedly hit the same bug: a doc says "not yet built" once, early, the
+feature gets built several sessions later, and that original sentence never gets revised —
+so two docs end up contradicting each other and whoever reads them next (a person, or a fresh
+Claude session with no memory of the work) can't tell which one is true.
+
+Concretely, before ending any turn that finishes a real feature: `grep -rn "not yet\|coming
+soon\|hasn't been\|unconfirmed\|TODO" *.md` across this repo's root-level docs, and fix every
+hit that's now stale — not just the one entry that prompted the change. This is Claude's job to
+do automatically, not something the person using this project should have to remember to ask
+for or know how to check themselves.
+
 ## Current status (update this as things change)
 
 0. **Hydroquinone correction confirmed and propagated everywhere.** Re-verified directly against
@@ -83,8 +98,9 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
    — replacing the old 5 placeholder dummy rules. `AssessmentForm.tsx` is a
    full multi-step wizard covering the whole questionnaire, wired end to
    end through to this real rule data. See `TEST_SCENARIOS.md` for a full
-   QA pass — 36 scenarios covering every safety block, severity tier, and
-   edge case.
+   QA pass — 48 scenarios covering every safety block, severity tier, and
+   edge case, plus a dedicated role-based access section (Super Admin /
+   Clinic Admin / Staff).
    **Action needed — loading the rules onto the live database.** The seed
    does NOT run automatically on deploy. **Render's Shell tab needs a paid
    plan** (confirmed — free tier blocks it), so use the SQL path instead:
@@ -131,42 +147,47 @@ B2B SaaS skincare recommendation engine for clinics — built from your spec wit
    Save-rebuild-and-deploy flow as before.
 
 **Confirmed working end-to-end (tested live, not just built):** signup → 14-day trial created
-correctly → billing page shows correct trial status → "Add Payment" correctly shows an error
-(Paystack not connected yet, expected). Assessment flow is reachable via direct URL once the nav
-issue above is worked around, but hasn't been walked through yet.
+correctly → billing page shows correct trial status → Paystack checkout → real payment confirmed
+→ subscription extended correctly. Full multi-step assessment flow walked through and used
+repeatedly, not just reachable via direct URL.
 
 **Live infrastructure:**
 - Code: GitHub — `Raid-01/myglowback-ai`
 - Hosting: Render (free tier) — `https://myglowback-ai.onrender.com`
-- Database: Neon (free tier), connected and working
-- Email: Resend, switched to HTTP API (not SMTP — Render's free tier blocks outbound SMTP ports,
-  platform-level rule, not a config issue) — **but still not actually delivering, unconfirmed
-  cause, see task #1 above.** Sandbox mode (`onboarding@resend.dev`, can only deliver to the
-  Resend account's own signup email until a real domain is verified).
-- Payments: Paystack **not yet connected** — still placeholder keys, so "Add Payment" correctly
-  shows an error rather than hanging
-- Daily cron (trial expiry + reminder emails): **not yet connected** — code is built and ready at
-  `/api/cron/check-subscriptions`, but no scheduler is actually calling it yet. Needs a free
-  service like cron-job.org pointed at it once a day, with the `CRON_SECRET` from Render's
-  Environment tab as a Bearer token.
+- Database: Neon (free tier, pooled connection), connected and working
+- Email: Resend, HTTP API — **confirmed delivering**, including reply-to routing
+- Payments: Paystack — **confirmed live, test payment went through end to end**, webhook
+  idempotency handled
+- Daily cron (trial expiry + reminder emails, and clearing a lapsed clinic's locked price):
+  **status not confirmed as of the last working session** — code is built and ready at
+  `/api/cron/check-subscriptions`, a cron-job.org walkthrough was given, but there's no
+  confirmation in this document that the daily ping was actually set up. **Verify this
+  directly** rather than assume either way — check cron-job.org's dashboard for a job pointed
+  at that URL.
 
 **Product features live:** 14-day free trial on signup, welcome + payment-confirmation emails
-(built, delivery unconfirmed — see task #1), all 12 spec pages, PDF generation for invoices and
-prescriptions, role-based permissions (Clinic Admin vs. Staff vs. Super Admin).
+(confirmed delivering), all 12 spec pages, PDF generation for invoices and prescriptions,
+role-based permissions (Clinic Admin vs. Staff vs. Super Admin).
 
-**Still using dummy data:** the `SkincareRule` table has 5 example rules — swap these for the real
-ebook's protocols whenever ready (`src/lib/matching-engine.ts` doesn't need to change, only the
-data).
+**Rule data is real, not a placeholder.** `prisma/rules-data.ts` has 20 real `SkincareRule` rows —
+confirmed directly against the file — covering all 5 concerns at Mild/Moderate/Severe where that
+applies, pregnancy-safe variants, the pharmacy-verification-gated rule, and the 4 combination
+rules. This replaced the old 5-row placeholder set. `src/lib/matching-engine.ts` doesn't need to
+change if the rule content changes again, only the data.
 
-**Not yet done:** real branding (currently a generic sage/ivory placeholder look), PillsRx
-subdomain for email, Paystack live-mode keys (needs business/bank verification with Paystack).
+**Not yet done:** final brand colors — `tailwind.config.ts`'s sage/ivory/honey tokens are a
+placeholder direction, not locked-in branding. A UI redesign using that same placeholder palette
+started on the shared component kit (`src/components/ui/`); pages haven't been touched yet.
+Also still open: the PillsRx subdomain for email, and Paystack live-mode keys (needs business/bank
+verification with Paystack — test keys are already configured and confirmed working, see "Live
+infrastructure" above).
 
 ## What's included
 
 All 12 pages/features from the brief, in priority order: landing page with pricing calculator,
 auth (email/password + Google), sign-up flow, dashboard with renewal banner, billing center with
 PDF invoices, the exact reminder popup logic, the midnight Lagos cron job, the assessment form
-restricted to the 4 core concerns, prescription output with PDF generation, inventory CRUD,
+covering the 5 core concerns, prescription output with PDF generation, inventory CRUD,
 patient management with search, and the Super Admin view. Plus the public booking portal
 ("Clinic unavailable" state) mentioned in the service-cessation section.
 
@@ -245,8 +266,15 @@ covers Render's $7/mo Starter (removes the cold start) for the next several year
 
 ## Not done / needs real credentials before it's live
 
-- Paystack test/live keys, Google OAuth credentials, SMTP credentials — all in `.env.example`.
+- Google OAuth credentials — not yet configured (in `.env.example`). Paystack keys and email are
+  **not** on this list anymore: Paystack test keys are confirmed live with a real payment
+  end-to-end, and email is confirmed delivering — see "Live infrastructure" above. Only Paystack
+  **live-mode** keys remain genuinely pending (needs business/bank verification with Paystack).
 - No automated tests were written given the scope; I'd recommend at minimum covering the matching
   engine and the cron job's checkpoint logic before this handles real clinic data.
-- `npm install` / a live dev server weren't run in this environment — the code is complete and
-  internally consistent, but give it a `npm run build` on your machine as a first sanity check.
+- `npm install` now confirmed working directly (installed cleanly), and a full TypeScript
+  type-check ran clean aside from pre-existing gaps unrelated to any recent change — loose
+  implicit-`any` typing scattered across several page files, and `@prisma/client` types that only
+  resolve after `prisma generate` is run against a real `DATABASE_URL`. Worth tightening at some
+  point, not urgent. A full `npm run build` against real environment variables still hasn't been
+  run — worth doing on your machine or Render as a first sanity check.

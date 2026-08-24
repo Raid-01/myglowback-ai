@@ -506,10 +506,14 @@ compose safely:
 | Aging + Sun Damage | Vitamin C + Vitamin E + Ferulic Acid morning antioxidant stack serves both |
 | Any concern + Glowing Skin | Glowing Skin's six-step structure becomes the routine scaffold; the other concern's specific "Treat" step slots into it, rather than running two parallel routines |
 
-**Implementation note:** these need to become actual `SkincareRule` rows
-with multi-concern `condition.concerns` arrays (e.g.
-`["ACNE","HYPERPIGMENTATION"]`), scored above two separate single-concern
-rules when both apply — not yet built into the seed data.
+**Implementation status:** the first 4 combinations above are built as real
+`SkincareRule` rows with multi-concern `condition.concerns` arrays (e.g.
+`["ACNE","HYPERPIGMENTATION"]`) in `prisma/rules-data.ts`, scored above two
+separate single-concern rules whenever both apply. The 5th — "Any concern +
+Glowing Skin" — was deliberately not built as a forced pairing; letting the
+more clinically specific concern win on its own already works fine, and
+forcing every concern to have its own Glowing Skin variant would have
+meant real duplication for limited benefit.
 
 ---
 
@@ -567,10 +571,12 @@ questions and scoring.
 11. Peptides confirmed as adjunctive anti-aging therapy ✓
 12. Ageing gracefully brand framing ✓
 13. Age/hormonal-stage personalization ✓ — **age bands clarified as fallback, direct question as source of truth**
-14. **[NEW]** Combination-concern rules — flagged, not yet built into rule data
+14. **[NEW]** Combination-concern rules — 4 of 5 built into rule data (see Section 8 for which one wasn't, and why)
 15. **[NEW]** Fitzpatrick/skin-of-color defaults
 16. **[NEW]** NAFDAC-compliant hydroquinone/kojic acid handling
 
-**Not yet done:** the actual `SkincareRule` rows implementing all of the
-above — this document is the source content; turning it into rule data
-(and the combination rules from Section 8) is the next build step.
+**Done:** the actual `SkincareRule` rows implementing all of the above exist
+in `prisma/rules-data.ts` — 20 rules total, including the 4 combination
+rules from Section 8. `scripts/generate-seed-sql.ts` turns this into
+pasteable SQL for Neon (`seed-rules.sql`) — regenerate that file any time
+`rules-data.ts` changes, and re-run it in Neon's SQL Editor.

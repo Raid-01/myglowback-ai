@@ -1,10 +1,11 @@
 # MyGlowBack.AI — Patient Assessment Questionnaire & Severity-Scoring Rubric
 
-**Status: working draft, built jointly with Sade/R — not yet final, not yet built into the UI.**
-Every question below already has a matching field in the database schema
+**Status: content finalized and fully built into the UI.** `AssessmentForm.tsx`
+is a complete multi-step wizard covering every question below — see
+`src/components/assessment-steps/` for each step as its own file, and
+`src/lib/assessment-scoring.ts` for the derivation/severity math. Every
+question below already has a matching field in the database schema
 (`prisma/schema.prisma`) and the matching engine (`src/lib/matching-engine.ts`).
-Building the actual form UI around this content is the next step once the
-wording below is approved.
 
 **Design principle throughout:** nothing here is decorative. Every question
 either (a) feeds a hard safety rule, (b) determines a severity tier, (c)
@@ -250,8 +251,16 @@ the literal proof that nothing here is decorative.
 
 ---
 
-## Open items before this becomes the real form
+## Status of the items originally listed here
 
-1. **Combination-concern rules** — when a patient selects 2+ concerns (e.g. Acne + Hyperpigmentation, very common per 5A.4), we need dedicated combination rules in the `SkincareRule` table rather than trusting two single-concern rules to compose safely. Not built yet.
-2. **UI build-out** — `AssessmentForm.tsx` currently only asks the original skinType/concerns/allergies/ageRange questions. Everything else here exists in the schema and API but needs the actual form rebuilt around it.
-3. **Rule data** — none of this matters until the real `SkincareRule` rows replace the dummy seed data. That's the master algorithm document — see `MASTER_ALGORITHM.md`.
+All three of the original open items are done — noted here so this doesn't
+read as still-pending:
+
+1. ~~Combination-concern rules~~ — built. 4 combination rules exist in
+   `prisma/rules-data.ts` (Acne+Hyperpigmentation, Acne+Aging,
+   Hyperpigmentation+Sun Damage, Aging+Sun Damage), scored to outrank a
+   single-concern rule whenever both concerns are selected.
+2. ~~UI build-out~~ — done. `AssessmentForm.tsx` covers every question in
+   this document.
+3. ~~Rule data~~ — done. 20 real `SkincareRule` rows exist in
+   `prisma/rules-data.ts`, replacing the old placeholder dummy data.

@@ -7,8 +7,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: 'bg-sage-600 text-white hover:bg-sage-700 shadow-soft',
-  secondary: 'bg-ivory-200 text-clinical-text hover:bg-ivory-300 border border-clinical-border',
+  primary: 'bg-sage-600 text-white shadow-soft hover:bg-sage-700 active:bg-sage-800',
+  secondary: 'bg-white text-clinical-text border border-clinical-border hover:bg-ivory-100 hover:border-sage-300',
   ghost: 'bg-transparent text-sage-700 hover:bg-sage-50',
   danger: 'bg-danger text-white hover:opacity-90',
 };
@@ -24,7 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors duration-150 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage-500',
+        'inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-tight transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sage-500 active:scale-[0.98]',
         variants[variant],
         sizes[size],
         className

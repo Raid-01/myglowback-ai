@@ -53,6 +53,7 @@ const config: Config = {
       },
       boxShadow: {
         soft: '0 8px 30px -10px rgba(43, 62, 44, 0.15)',
+        card: 'inset 0 1px 0 0 rgba(255,255,255,0.8), 0 10px 34px -14px rgba(43, 62, 44, 0.22)',
       },
     },
   },
