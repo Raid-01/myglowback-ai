@@ -173,6 +173,7 @@ async function main() {
         followUpDays: rule.followUpDays,
         requiresLicensedPharmacy: rule.requiresLicensedPharmacy ?? false,
         escalationNote: rule.escalationNote ?? null,
+        prescriptionOptions: rule.prescriptionOptions ?? [],
       },
       create: {
         name: rule.name,
@@ -183,6 +184,7 @@ async function main() {
         followUpDays: rule.followUpDays,
         requiresLicensedPharmacy: rule.requiresLicensedPharmacy ?? false,
         escalationNote: rule.escalationNote ?? null,
+        prescriptionOptions: rule.prescriptionOptions ?? [],
       },
     });
   }

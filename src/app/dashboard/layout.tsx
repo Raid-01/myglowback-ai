@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   MessageSquare,
   TrendingUp,
+  UserCog,
 } from 'lucide-react';
 
 // A Server Component can't reach into an object of components exported by a
@@ -31,6 +32,7 @@ const SERVER_ICON_MAP = {
   ShieldCheck,
   MessageSquare,
   TrendingUp,
+  UserCog,
 } satisfies Record<NavIconName, typeof LayoutDashboard>;
 
 const NAV: { href: string; label: string; icon: NavIconName; roles: string[] }[] = [
@@ -40,6 +42,7 @@ const NAV: { href: string; label: string; icon: NavIconName; roles: string[] }[]
   { href: '/dashboard/revenue', label: 'Revenue', icon: 'TrendingUp', roles: ['CLINIC_ADMIN'] },
   { href: '/dashboard/inventory', label: 'Inventory', icon: 'Package', roles: ['CLINIC_ADMIN'] },
   { href: '/dashboard/billing', label: 'Billing', icon: 'CreditCard', roles: ['CLINIC_ADMIN'] },
+  { href: '/dashboard/staff', label: 'Staff', icon: 'UserCog', roles: ['CLINIC_ADMIN'] },
   { href: '/dashboard/feedback', label: 'Feedback', icon: 'MessageSquare', roles: ['CLINIC_ADMIN', 'STAFF'] },
   { href: '/dashboard/super-admin', label: 'Super Admin', icon: 'ShieldCheck', roles: ['SUPER_ADMIN'] },
 ];

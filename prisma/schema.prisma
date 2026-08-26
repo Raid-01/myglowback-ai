@@ -87,6 +87,7 @@ model User {
   email         String         @unique
   password      String?
   role          Role           @default(STAFF)
+  staffType     StaffType?     // set only by a Clinic Admin — see StaffType comment above
   clinicId      String?
   clinic        Clinic?        @relation(fields: [clinicId], references: [id])
   assessments   Assessment[]
@@ -102,6 +103,18 @@ enum Role {
   SUPER_ADMIN
   CLINIC_ADMIN
   STAFF
+}
+
+// Independent of Role above — Role controls which PAGES someone can open
+// (billing, inventory, admin panels). StaffType controls whether prescription-
+// tier ingredients (Tretinoin, Tazarotene, >2% Hydroquinone) can actually be
+// dispensed through this specific person's login. Applies to STAFF and
+// CLINIC_ADMIN accounts alike, since a clinic owner is often the pharmacist
+// themselves. Null/unset always behaves as SUPPORT_STAFF (safe default —
+// nothing unlocks until a Clinic Admin explicitly tags someone as PHARMACIST).
+enum StaffType {
+  PHARMACIST
+  SUPPORT_STAFF
 }
 
 // Both CLINIC_ADMIN and STAFF can submit and vote — staff are closest to
@@ -195,8 +208,14 @@ model Assessment {
   hormonalStage           HormonalStage   @default(NOT_APPLICABLE)
   onHormonalContraceptionOrHRT Boolean    @default(false)
   cycleRelatedFlares      Boolean   @default(false)
+  cyclePattern            String[]  @default([]) // follow-up if cycleRelatedFlares=true: how it changes
+                                     // (e.g. "oilier_breakouts") — read by the matching engine to bias
+                                     // toward Azelaic Acid/Niacinamide when ACNE is also selected
   hotFlashesOrNightSweats Boolean   @default(false)
   recentSkinTextureChange Boolean   @default(false)
+  textureChangeType       String[]  @default([]) // follow-up if recentSkinTextureChange=true:
+                                     // "drier" and/or "more_sensitive" — "more_sensitive" also feeds
+                                     // sensitiveOverlay alongside the existing 2.4/2.5 reactivity score
   recommendedRoutine      Json?
   recommendedIngredients  String[]
   matchedProducts         String[]
@@ -206,6 +225,12 @@ model Assessment {
   escalationNote          String?   // Set by the engine when a verified pharmacy's patient may
                                      // benefit from prescription-tier intervention — never an
                                      // instruction to dispense, always framed as "refer/prescribe"
+  prescriptionOptions     String[]  @default([]) // From the matched rule — always shown with a
+                                     // "Prescription only" badge to every clinic. Whether THIS
+                                     // login can actually act on it is computed fresh per view
+                                     // (clinic verification + current viewer's StaffType), never
+                                     // stored here — a later viewer's permissions must never be
+                                     // frozen at whoever originally ran the assessment.
   followUpDate            DateTime?
   sales                   Sale[]
   createdAt               DateTime  @default(now())
@@ -387,6 +412,11 @@ model SkincareRule {
   escalationNote           String?  // Shown alongside the routine when this rule fires — always
                            // framed as "refer to / requires a licensed prescriber," never a
                            // dispensing instruction the app is giving on its own
+  prescriptionOptions      String[] @default([]) // Prescription-strength options this rule would
+                           // consider if OTC tier proves insufficient (e.g. "Tretinoin 0.025-0.1%").
+                           // ALWAYS shown to every clinic with a "Prescription only" badge — never
+                           // hidden. Only a verified PHARMACIST at a verified-pharmacy clinic gets
+                           // an actual action to dispense it; everyone else sees the badge only.
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 }

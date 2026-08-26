@@ -59,9 +59,18 @@ export function deriveSkinType(tZone: Tri, cheeks: Tri, pores: string): string {
   return result;
 }
 
-// Part 2.4/2.5 — sensitivity overlay, independent of base skin type
-export function deriveSensitiveOverlay(reactivity: number, diagnosed: boolean): boolean {
-  return reactivity + (diagnosed ? 2 : 0) >= 2;
+// Part 2.4/2.5 — sensitivity overlay, independent of base skin type.
+// A recent-onset "more sensitive" answer from the Part 1 texture-change
+// follow-up counts toward this same flag (worth +2, same weight as a
+// doctor-diagnosed reactive condition) — a newly-reactive patient should
+// get the gentler tier regardless of which question caught it first.
+export function deriveSensitiveOverlay(
+  reactivity: number,
+  diagnosed: boolean | null,
+  textureChangeType: string[] = []
+): boolean {
+  const recentlyMoreSensitive = textureChangeType.includes('more_sensitive');
+  return reactivity + (diagnosed ? 2 : 0) + (recentlyMoreSensitive ? 2 : 0) >= 2;
 }
 
 // Part 3 — Fitzpatrick self-assessment
@@ -94,10 +103,12 @@ export interface FormState {
   ageRange: string; // 1.1
   pregnancyStatus: string; // 1.3
   hormonalStage: string; // 1.4
-  onHormonalContraceptionOrHRT: boolean; // 1.5
-  cycleRelatedFlares: boolean; // 1.6a
-  hotFlashesOrNightSweats: boolean; // 1.6b
-  recentSkinTextureChange: boolean; // hormonal-shift signal, see Section 7B of the source protocol
+  onHormonalContraceptionOrHRT: boolean | null; // 1.5 — null = not yet answered, never defaults to "No"
+  cycleRelatedFlares: boolean | null; // 1.6a
+  cyclePattern: string[]; // follow-up if cycleRelatedFlares === true: how it changes
+  hotFlashesOrNightSweats: boolean | null; // 1.6b
+  recentSkinTextureChange: boolean | null; // hormonal-shift signal, see Section 7B of the source protocol
+  textureChangeType: string[]; // follow-up if recentSkinTextureChange === true: what changed
 
   // medical history (Part 1 cont.)
   allergies: string; // 1.7
@@ -110,7 +121,7 @@ export interface FormState {
   cheeks: Tri; // 2.2
   pores: string; // 2.3
   reactivity: number; // 2.4 (0/1/2)
-  diagnosedReactive: boolean; // 2.5
+  diagnosedReactive: boolean | null; // 2.5
 
   // Fitzpatrick (Part 3)
   naturalTone: number; // 3.1 (0-5)
@@ -122,12 +133,12 @@ export interface FormState {
   // severity (Parts 5A-5E) — only the relevant sub-object matters per selected concern
   acneCount: number; // 5A.1
   acneCysts: number; // 5A.2
-  acneChronic: boolean; // 5A.3
-  acneScarring: boolean; // 5A.4
+  acneChronic: boolean | null; // 5A.3
+  acneScarring: boolean | null; // 5A.4
 
   pigDarkness: number; // 5B.1
   pigDuration: number; // 5B.2
-  pigSunReactive: boolean; // 5B.3
+  pigSunReactive: boolean | null; // 5B.3
   pigPattern: string; // 5B.4
 
   sunSpfHabit: number; // 5C.1
@@ -144,14 +155,15 @@ export interface FormState {
 
 export const INITIAL_STATE: FormState = {
   patientId: '', firstName: '', lastName: '', phone: '', email: '', biologicalSex: '',
-  ageRange: '', pregnancyStatus: '', hormonalStage: '', onHormonalContraceptionOrHRT: false,
-  cycleRelatedFlares: false, hotFlashesOrNightSweats: false, recentSkinTextureChange: false,
+  ageRange: '', pregnancyStatus: '', hormonalStage: '', onHormonalContraceptionOrHRT: null,
+  cycleRelatedFlares: null, cyclePattern: [], hotFlashesOrNightSweats: null,
+  recentSkinTextureChange: null, textureChangeType: [],
   allergies: '', knownSkinConditions: '', currentMedications: '', previousTreatments: '',
-  tZone: '', cheeks: '', pores: '', reactivity: 0, diagnosedReactive: false,
+  tZone: '', cheeks: '', pores: '', reactivity: 0, diagnosedReactive: null,
   naturalTone: 0, sunReaction: 0,
   concerns: [],
-  acneCount: 0, acneCysts: 0, acneChronic: false, acneScarring: false,
-  pigDarkness: 0, pigDuration: 0, pigSunReactive: false, pigPattern: '',
+  acneCount: 0, acneCysts: 0, acneChronic: null, acneScarring: null,
+  pigDarkness: 0, pigDuration: 0, pigSunReactive: null, pigPattern: '',
   sunSpfHabit: 0, sunSignsCount: 0,
   agingMain: 0,
   glowGoal: '', glowRoutine: '',

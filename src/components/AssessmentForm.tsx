@@ -85,7 +85,7 @@ export function AssessmentForm({ patients }: { patients: { id: string; firstName
 
     const payload: Record<string, unknown> = {
       skinType: deriveSkinType(s.tZone, s.cheeks, s.pores),
-      sensitiveOverlay: deriveSensitiveOverlay(s.reactivity, s.diagnosedReactive),
+      sensitiveOverlay: deriveSensitiveOverlay(s.reactivity, s.diagnosedReactive, s.textureChangeType),
       fitzpatrickType: deriveFitzpatrick(s.naturalTone, s.sunReaction),
       concerns: s.concerns,
       severityByConcern: buildSeverityByConcern(s),
@@ -97,10 +97,17 @@ export function AssessmentForm({ patients }: { patients: { id: string; firstName
       ageRange: s.ageRange || undefined,
       pregnancyStatus: s.pregnancyStatus || undefined,
       hormonalStage: s.hormonalStage || undefined,
-      onHormonalContraceptionOrHRT: s.onHormonalContraceptionOrHRT,
-      cycleRelatedFlares: s.cycleRelatedFlares,
-      hotFlashesOrNightSweats: s.hotFlashesOrNightSweats,
-      recentSkinTextureChange: s.recentSkinTextureChange,
+      // Schema columns are non-nullable booleans — an unanswered (null) yes/no
+      // question is stored as false, same as an explicit "No". The visual
+      // bug this fixes was about never *showing* an unanswered question as
+      // pre-clicked; once genuinely submitted, "never answered" and "no"
+      // collapse to the same safe default, same as before this change.
+      onHormonalContraceptionOrHRT: s.onHormonalContraceptionOrHRT ?? false,
+      cycleRelatedFlares: s.cycleRelatedFlares ?? false,
+      cyclePattern: s.cyclePattern,
+      hotFlashesOrNightSweats: s.hotFlashesOrNightSweats ?? false,
+      recentSkinTextureChange: s.recentSkinTextureChange ?? false,
+      textureChangeType: s.textureChangeType,
     };
 
     if (isNewPatient) {

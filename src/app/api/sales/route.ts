@@ -10,6 +10,11 @@ const bodySchema = z.object({
   productName: z.string().min(1),
   quantity: z.number().int().positive().default(1),
   amount: z.number().positive(),
+  // Set only when this sale is dispensing a prescription-tier item
+  // (Tretinoin, Tazarotene, above-2% Hydroquinone). Triggers the real
+  // server-side check below — this is the actual security boundary, not
+  // just a button that happens to be hidden from non-pharmacists in the UI.
+  isPrescriptionTierDispense: z.boolean().optional(),
 });
 
 export async function POST(req: Request) {
@@ -44,6 +49,25 @@ export async function POST(req: Request) {
       where: { id: data.productId, clinicId: session.user.clinicId },
     });
     if (!owned) return NextResponse.json({ error: 'Product not found for this clinic.' }, { status: 404 });
+  }
+
+  // Real security boundary, not a UI-only check: a prescription-tier
+  // dispense requires BOTH a verified-pharmacy clinic AND the specific
+  // logged-in person being tagged PHARMACIST by their Clinic Admin — a
+  // support-staff login at the same clinic must never reach this branch,
+  // regardless of what the client sends.
+  if (data.isPrescriptionTierDispense) {
+    const [clinic, staff] = await Promise.all([
+      prisma.clinic.findUnique({ where: { id: session.user.clinicId }, select: { licenseType: true, licenseVerifiedAt: true } }),
+      prisma.user.findUnique({ where: { id: session.user.id }, select: { staffType: true } }),
+    ]);
+    const clinicIsVerifiedPharmacy = clinic?.licenseType === 'PHARMACY' && clinic?.licenseVerifiedAt != null;
+    if (!clinicIsVerifiedPharmacy || staff?.staffType !== 'PHARMACIST') {
+      return NextResponse.json(
+        { error: 'Only a verified pharmacist at a verified pharmacy can dispense a prescription-tier item.' },
+        { status: 403 }
+      );
+    }
   }
 
   const sale = await prisma.sale.create({

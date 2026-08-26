@@ -73,30 +73,42 @@ Nigeria:
   Nigeria — oversight of aesthetic medicine is fragmented, with industry
   leaders actively calling for defined role boundaries as of mid-2026.
 
-**Resulting design:** the app has two content tiers.
+**Resulting design:** the app has two content tiers, gated on two independent
+axes.
 
 - **OTC tier** — available to every subscribed clinic regardless of type.
   Everything in Sections 1–7 below that isn't explicitly marked
   prescription-tier.
-- **Prescription tier** — only ever surfaced to a `Clinic` with
-  `licenseType = PHARMACY` **and** a non-null `licenseVerifiedAt` (set
-  manually by a `SUPER_ADMIN` after checking the PCN number — never by
-  self-declaration at signup). Even then, it's never presented as "give the
-  patient X" — it's an `escalationNote`: *"this patient's severity suggests
-  possible benefit from [prescription-strength intervention] — requires
-  assessment and prescription from a licensed physician before dispensing."*
-  The app flags the clinical possibility; a doctor still has to actually
-  write the prescription, and the pharmacist still dispenses against it.
-  The app is never the prescriber.
+- **Prescription tier** — clinically indicated options (Tretinoin,
+  Tazarotene, Hydroquinone above 2%, Kojic Acid above 1%, triple/quadruple
+  combination creams) always **appear**, to every clinic, labeled with a
+  "Prescription only" badge — this is informational, never hidden. Whether
+  the item can actually be **dispensed** depends on two things being true at
+  once: the `Clinic` must be `licenseType = PHARMACY` with a non-null
+  `licenseVerifiedAt` (set manually by a `SUPER_ADMIN` after checking the PCN
+  number), **and** the specific logged-in person must be tagged `PHARMACIST`
+  (`User.staffType`, set only by their own `CLINIC_ADMIN` — never
+  self-declared). A verified-pharmacy clinic with a receptionist or
+  technician logged in sees the exact same badge as anyone else — no action.
+  **Confirmed directly (this is the domain expert's own field, not a
+  legal-research finding on my part):** in Nigeria, none of these ingredients
+  are controlled drugs, so a pharmacist's own professional discretion is
+  sufficient to dispense — there is no separate legal requirement to record
+  a prescription first, the way there would be for an actual controlled
+  substance. This gate is Nigeria-specific; revisit before expanding to any
+  other country, since the underlying legal distinction (controlled vs.
+  merely prescription-only) may not carry over.
 
-Ingredients currently gated to prescription-tier-only: **Hydroquinone above
-2%**, **Kojic acid above 1%**, and the **triple/quadruple combination
-creams** (Kligman's formula and variants — always prescription-tier
-regardless of HQ strength, since they also contain prescription-only
-tretinoin) described in Section 2. Hydroquinone at ≤2% and kojic acid at
-≤1% are OTC-tier, same as any other evidence-based ingredient in this
-document — subject to the same pregnancy/breastfeeding/TTC/under-18 hard
-blocks as everything else with a real safety concern for those groups.
+Ingredients currently in the prescription tier: **Hydroquinone above 2%**,
+**Kojic acid above 1%**, **Tretinoin**, **Tazarotene**, and the
+**triple/quadruple combination creams** (Kligman's formula and variants).
+Hydroquinone at ≤2% and kojic acid at ≤1% are OTC-tier, same as any other
+evidence-based ingredient in this document — subject to the same
+pregnancy/breastfeeding/TTC/under-18 hard blocks as everything else with a
+real safety concern for those groups. Clascoterone (a topical anti-androgen,
+conditionally recommended in the AAD's 2024 acne guidelines) is **not**
+currently in the algorithm — availability in Nigeria hasn't been confirmed,
+so it's deliberately left out rather than added on an assumption.
 
 ---
 
@@ -466,7 +478,7 @@ and answer options — Age & Life Stage (1.1), Pregnancy/Breastfeeding/TTC
 | Age 36–45 | Estrogen decline starting → hyaluronic acid, ceramides, barrier support |
 | Age 46–55 | Menopause likely → retinoids start slow, peptides, deep moisturization |
 | Age 55+ | Fragile skin → lowest retinoid concentration, barrier repair focus, avoid aggressive exfoliation |
-| Hormonal (cycle-related) acne | Add Azelaic Acid or Niacinamide; spironolactone → refer to dermatologist |
+| Hormonal (cycle-related) acne | Add Azelaic Acid or Niacinamide; spironolactone → refer to dermatologist. **Now actually wired**: the assessment's cycle follow-up question feeds this directly into `matching-engine.ts`'s scoring — this was previously documented intent only |
 | Melasma (hormonal) | Tranexamic Acid + Azelaic Acid + Vitamin C; mandatory tinted sunscreen |
 
 ### Example Algorithm Outputs

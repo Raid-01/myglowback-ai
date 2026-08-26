@@ -36,8 +36,10 @@ const bodySchema = z.object({
     .optional(),
   onHormonalContraceptionOrHRT: z.boolean().optional(),
   cycleRelatedFlares: z.boolean().optional(),
+  cyclePattern: z.array(z.string()).optional(),
   hotFlashesOrNightSweats: z.boolean().optional(),
   recentSkinTextureChange: z.boolean().optional(),
+  textureChangeType: z.array(z.string()).optional(),
 });
 
 export async function POST(req: Request) {
@@ -81,6 +83,14 @@ export async function POST(req: Request) {
     }
   }
 
+  // Fetched fresh from the DB rather than trusted from the session token —
+  // a Clinic Admin may tag/untag someone as Pharmacist mid-session, and
+  // that change must take effect on the next assessment immediately.
+  const currentStaff = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { staffType: true },
+  });
+
   const match = await matchAssessmentToRoutine({
     clinicId,
     skinType: data.skinType,
@@ -89,6 +99,8 @@ export async function POST(req: Request) {
     ageRange: data.ageRange,
     pregnancyStatus: data.pregnancyStatus,
     severityByConcern: data.severityByConcern,
+    cyclePattern: data.cyclePattern,
+    isPharmacistStaff: currentStaff?.staffType === 'PHARMACIST',
   });
 
   const assessment = await prisma.assessment.create({
@@ -111,14 +123,17 @@ export async function POST(req: Request) {
       hormonalStage: data.hormonalStage,
       onHormonalContraceptionOrHRT: data.onHormonalContraceptionOrHRT ?? false,
       cycleRelatedFlares: data.cycleRelatedFlares ?? false,
+      cyclePattern: data.cyclePattern ?? [],
       hotFlashesOrNightSweats: data.hotFlashesOrNightSweats ?? false,
       recentSkinTextureChange: data.recentSkinTextureChange ?? false,
+      textureChangeType: data.textureChangeType ?? [],
       recommendedRoutine: match.routine,
       recommendedIngredients: match.ingredients,
       matchedProducts: match.matchedProducts.map((p) => p.id),
       suggestedUpsells: match.upsells,
       safetyBlockedIngredients: match.safetyBlockedIngredients,
       escalationNote: match.escalationNote,
+      prescriptionOptions: match.prescriptionOptions,
       followUpDate: match.followUpDate,
     },
   });

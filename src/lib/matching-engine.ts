@@ -23,6 +23,11 @@ export interface AssessmentInput {
   ageRange?: AgeRange | null;
   pregnancyStatus?: PregnancyStatus; // defaults to NOT_APPLICABLE if omitted
   severityByConcern?: Partial<Record<string, string>>; // Concern -> SeverityLevel
+  cyclePattern?: string[]; // follow-up to "does your skin change around your cycle" —
+  // e.g. 'oilier_breakouts' nudges toward Azelaic Acid/Niacinamide-anchored rules
+  // when ACNE is also selected, per MASTER_ALGORITHM.md's Personalization Rules table
+  isPharmacistStaff?: boolean; // true only when the logged-in staff member has been
+  // verified as a Pharmacist by their Clinic Admin — see StaffType in schema.prisma
 }
 
 export interface MatchResult {
@@ -34,6 +39,12 @@ export interface MatchResult {
   matchedRuleNames: string[];
   safetyBlockedIngredients: string[]; // transparency record for the dispensing pharmacist
   escalationNote: string | null;
+  // Always populated when the matched rule has any — shown to every clinic
+  // with a "Prescription only" badge. canDispense is only ever true when
+  // BOTH the clinic is a verified pharmacy AND the logged-in staff member is
+  // a verified pharmacist — everyone else sees the badge with no action.
+  prescriptionOptions: string[];
+  canDispensePrescriptionTier: boolean;
 }
 
 // --- Hard-safety ingredient blocklists ---------------------------------
@@ -133,7 +144,7 @@ function findSafetyViolations(rule: { ingredients: string[]; routine: unknown },
  * the requiresLicensedPharmacy filter below.
  */
 export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<MatchResult> {
-  const { clinicId, skinType, concerns, allergies, ageRange, pregnancyStatus, severityByConcern } = input;
+  const { clinicId, skinType, concerns, allergies, ageRange, pregnancyStatus, severityByConcern, cyclePattern, isPharmacistStaff } = input;
 
   const allergyTerms = (allergies ?? '')
     .toLowerCase()
@@ -149,6 +160,14 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
     select: { licenseType: true, licenseVerifiedAt: true },
   });
   const clinicIsVerifiedPharmacy = clinic?.licenseType === 'PHARMACY' && clinic?.licenseVerifiedAt != null;
+  const canDispensePrescriptionTier = clinicIsVerifiedPharmacy && isPharmacistStaff === true;
+
+  // Hormonal/cycle-pattern acne bias — Personalization Rules table,
+  // MASTER_ALGORITHM.md Section 7: "Hormonal (cycle-related) acne | Add
+  // Azelaic Acid or Niacinamide." Only applies when ACNE is a selected
+  // concern and the patient specifically reported oilier/more-breakouts
+  // around their cycle — a light scoring nudge, not a hard requirement.
+  const hasHormonalAcnePattern = concerns.includes('ACNE' as Concern) && (cyclePattern ?? []).includes('oilier_breakouts');
 
   const rules = await prisma.skincareRule.findMany();
   const safetyBlockedIngredients: string[] = [];
@@ -201,6 +220,9 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
       if (concernOverlap > 0 && violations.length > 0) safetyBlockedIngredients.push(...violations);
 
       let score = concernOverlap * 2 + skinTypeMatch + severityBonus;
+      if (hasHormonalAcnePattern && ruleConcerns.includes('ACNE') && containsTerm(rule.ingredients.join(' '), ['azelaic acid', 'niacinamide'])) {
+        score += 0.75; // light nudge only — never overrides severity/skin-type matching
+      }
       if (conflictsWithAllergy) score -= 100;
       if (violations.length > 0 || under18Retinoid) score -= 1000;
       if (pharmacyGateBlocked) score -= 1000;
@@ -230,6 +252,8 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
       matchedRuleNames: ['No rule matched — flagged for pharmacist review'],
       safetyBlockedIngredients: [...new Set(safetyBlockedIngredients)],
       escalationNote: null,
+      prescriptionOptions: [],
+      canDispensePrescriptionTier,
     };
   }
 
@@ -265,5 +289,7 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
     matchedRuleNames: scored.slice(0, 3).map((s) => s.rule.name),
     safetyBlockedIngredients: [...new Set(safetyBlockedIngredients)],
     escalationNote: top.escalationNote ?? null,
+    prescriptionOptions: top.prescriptionOptions ?? [],
+    canDispensePrescriptionTier,
   };
 }

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RecordSaleButton } from '@/components/RecordSaleButton';
+import { DispensePrescriptionButton } from '@/components/DispensePrescriptionButton';
 import { formatNaira } from '@/lib/utils';
 
 export default async function AssessmentDetailPage({ params }: { params: { id: string } }) {
@@ -16,6 +17,17 @@ export default async function AssessmentDetailPage({ params }: { params: { id: s
   });
 
   if (!assessment || assessment.clinicId !== session.user.clinicId) notFound();
+
+  // Computed fresh for whoever is viewing right now — never trust a value
+  // saved back when the assessment was originally created, since a
+  // different person (possibly a different StaffType) may be looking at it
+  // today, and a Clinic Admin may have changed someone's tag since then.
+  const [clinic, viewer] = await Promise.all([
+    prisma.clinic.findUnique({ where: { id: session.user.clinicId! }, select: { licenseType: true, licenseVerifiedAt: true } }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { staffType: true } }),
+  ]);
+  const clinicIsVerifiedPharmacy = clinic?.licenseType === 'PHARMACY' && clinic?.licenseVerifiedAt != null;
+  const canDispensePrescriptionTier = clinicIsVerifiedPharmacy && viewer?.staffType === 'PHARMACIST';
 
   const routine = assessment.recommendedRoutine as unknown as { am: string[]; pm: string[] };
   const matchedProducts = await prisma.product.findMany({
@@ -130,6 +142,35 @@ export default async function AssessmentDetailPage({ params }: { params: { id: s
               </Badge>
             ))}
           </div>
+        </Card>
+      )}
+
+      {assessment.prescriptionOptions.length > 0 && (
+        <Card className="mt-6">
+          <h2 className="mb-1 font-display text-base font-medium text-clinical-text">
+            Prescription-strength options
+          </h2>
+          <p className="mb-3 text-xs text-clinical-muted">
+            Clinically indicated if the routine above isn't enough — visible to every clinic, only
+            dispensable by a verified pharmacist.
+          </p>
+          <ul className="space-y-2">
+            {assessment.prescriptionOptions.map((item) => (
+              <li key={item} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-clinical-border p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-clinical-text">{item}</span>
+                  <Badge tone="danger">Prescription only</Badge>
+                </div>
+                {canDispensePrescriptionTier && (
+                  <DispensePrescriptionButton
+                    patientId={assessment.patient.id}
+                    assessmentId={assessment.id}
+                    itemName={item}
+                  />
+                )}
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 

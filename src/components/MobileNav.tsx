@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   MessageSquare,
   TrendingUp,
+  UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,7 @@ const ICON_MAP = {
   ShieldCheck,
   MessageSquare,
   TrendingUp,
+  UserCog,
 } as const;
 
 export type NavIconName = keyof typeof ICON_MAP;

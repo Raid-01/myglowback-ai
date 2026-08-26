@@ -9,7 +9,7 @@ export function ReviewStep({
   set: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
 }) {
   const derivedSkinType = deriveSkinType(state.tZone, state.cheeks, state.pores);
-  const derivedSensitive = deriveSensitiveOverlay(state.reactivity, state.diagnosedReactive);
+  const derivedSensitive = deriveSensitiveOverlay(state.reactivity, state.diagnosedReactive, state.textureChangeType);
   const derivedFitzpatrick = deriveFitzpatrick(state.naturalTone, state.sunReaction);
 
   return (

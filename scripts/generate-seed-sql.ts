@@ -31,14 +31,15 @@ lines.push('');
 for (const rule of rules) {
   const escalationNote = rule.escalationNote ? sqlString(rule.escalationNote) : 'NULL';
   const requiresLicensedPharmacy = rule.requiresLicensedPharmacy ? 'true' : 'false';
+  const prescriptionOptions = sqlTextArray(rule.prescriptionOptions ?? []);
 
   lines.push(
-    `INSERT INTO "SkincareRule" (id, name, condition, routine, ingredients, upsells, "followUpDays", "requiresLicensedPharmacy", "escalationNote", "createdAt", "updatedAt")`
+    `INSERT INTO "SkincareRule" (id, name, condition, routine, ingredients, upsells, "followUpDays", "requiresLicensedPharmacy", "escalationNote", "prescriptionOptions", "createdAt", "updatedAt")`
   );
   lines.push(
     `VALUES (gen_random_uuid()::text, ${sqlString(rule.name)}, ${sqlJson(rule.condition)}, ${sqlJson(
       rule.routine
-    )}, ${sqlTextArray(rule.ingredients)}, ${sqlTextArray(rule.upsells)}, ${rule.followUpDays}, ${requiresLicensedPharmacy}, ${escalationNote}, now(), now())`
+    )}, ${sqlTextArray(rule.ingredients)}, ${sqlTextArray(rule.upsells)}, ${rule.followUpDays}, ${requiresLicensedPharmacy}, ${escalationNote}, ${prescriptionOptions}, now(), now())`
   );
   lines.push(`ON CONFLICT ("name") DO UPDATE SET`);
   lines.push(`  condition = EXCLUDED.condition,`);
@@ -48,6 +49,7 @@ for (const rule of rules) {
   lines.push(`  "followUpDays" = EXCLUDED."followUpDays",`);
   lines.push(`  "requiresLicensedPharmacy" = EXCLUDED."requiresLicensedPharmacy",`);
   lines.push(`  "escalationNote" = EXCLUDED."escalationNote",`);
+  lines.push(`  "prescriptionOptions" = EXCLUDED."prescriptionOptions",`);
   lines.push(`  "updatedAt" = now();`);
   lines.push('');
 }

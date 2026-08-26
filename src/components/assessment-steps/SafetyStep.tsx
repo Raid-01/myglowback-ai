@@ -1,4 +1,4 @@
-import { ChoiceGroup, YesNo } from '@/components/ui/choice-group';
+import { ChoiceGroup, YesNo, MultiChoiceGroup } from '@/components/ui/choice-group';
 import { AGE_RANGES, type FormState } from '@/lib/assessment-scoring';
 
 export function SafetyStep({
@@ -72,6 +72,19 @@ export function SafetyStep({
                 value={state.cycleRelatedFlares}
                 onChange={(v) => set('cycleRelatedFlares', v)}
               />
+              {state.cycleRelatedFlares === true && (
+                <MultiChoiceGroup
+                  label="How does it change?"
+                  hint="Select all that apply — this can shift which active ingredient we lead with."
+                  values={state.cyclePattern}
+                  onChange={(v) => set('cyclePattern', v)}
+                  options={[
+                    { value: 'oilier_breakouts', label: 'More breakouts / oilier' },
+                    { value: 'more_sensitive', label: 'More sensitive or irritated' },
+                    { value: 'drier', label: 'Drier' },
+                  ]}
+                />
+              )}
               <YesNo
                 label="Do you get hot flashes or night sweats?"
                 value={state.hotFlashesOrNightSweats}
@@ -82,6 +95,18 @@ export function SafetyStep({
                 value={state.recentSkinTextureChange}
                 onChange={(v) => set('recentSkinTextureChange', v)}
               />
+              {state.recentSkinTextureChange === true && (
+                <MultiChoiceGroup
+                  label="What changed?"
+                  hint="Select all that apply."
+                  values={state.textureChangeType}
+                  onChange={(v) => set('textureChangeType', v)}
+                  options={[
+                    { value: 'drier', label: 'Drier' },
+                    { value: 'more_sensitive', label: 'More sensitive or reactive' },
+                  ]}
+                />
+              )}
             </>
           )}
         </>
