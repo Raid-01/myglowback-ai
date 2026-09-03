@@ -17,7 +17,7 @@ export function SeverityStep({
           <h3 className="text-sm font-semibold text-sage-800">Acne</h3>
           <ChoiceGroup
             label="Right now, how many active breakouts do you typically have at once?"
-            value={String(state.acneCount)}
+            value={state.acneCount == null ? '' : String(state.acneCount)}
             onChange={(v) => set('acneCount', Number(v))}
             options={[
               { value: '0', label: '0–5' },
@@ -27,7 +27,7 @@ export function SeverityStep({
           />
           <ChoiceGroup
             label="Any deep, painful, cyst-like bumps under the skin?"
-            value={String(state.acneCysts)}
+            value={state.acneCysts == null ? '' : String(state.acneCysts)}
             onChange={(v) => set('acneCysts', Number(v))}
             options={[
               { value: '0', label: 'None' },
@@ -53,7 +53,7 @@ export function SeverityStep({
           <h3 className="text-sm font-semibold text-sage-800">Hyperpigmentation</h3>
           <ChoiceGroup
             label="How noticeable is the discoloration compared to your natural skin tone?"
-            value={String(state.pigDarkness)}
+            value={state.pigDarkness == null ? '' : String(state.pigDarkness)}
             onChange={(v) => set('pigDarkness', Number(v))}
             options={[
               { value: '0', label: 'Barely noticeable' },
@@ -63,7 +63,7 @@ export function SeverityStep({
           />
           <ChoiceGroup
             label="How long have you had it?"
-            value={String(state.pigDuration)}
+            value={state.pigDuration == null ? '' : String(state.pigDuration)}
             onChange={(v) => set('pigDuration', Number(v))}
             options={[
               { value: '0', label: 'Under 3 months' },
@@ -95,7 +95,7 @@ export function SeverityStep({
           <h3 className="text-sm font-semibold text-sage-800">Sun damage</h3>
           <ChoiceGroup
             label="How often do you currently wear sunscreen?"
-            value={String(state.sunSpfHabit)}
+            value={state.sunSpfHabit == null ? '' : String(state.sunSpfHabit)}
             onChange={(v) => set('sunSpfHabit', Number(v))}
             options={[
               { value: '0', label: 'Daily, and I reapply outdoors' },
@@ -106,7 +106,7 @@ export function SeverityStep({
           />
           <ChoiceGroup
             label="How many of these do you currently notice? Rough texture, fine lines from sun, uneven tone, visible sunspots, broken capillaries"
-            value={String(state.sunSignsCount)}
+            value={state.sunSignsCount == null ? '' : String(state.sunSignsCount)}
             onChange={(v) => set('sunSignsCount', Number(v))}
             options={[
               { value: '0', label: 'None' },
@@ -122,7 +122,7 @@ export function SeverityStep({
           <h3 className="text-sm font-semibold text-sage-800">Aging</h3>
           <ChoiceGroup
             label="Which best describes your main concern?"
-            value={String(state.agingMain)}
+            value={state.agingMain == null ? '' : String(state.agingMain)}
             onChange={(v) => set('agingMain', Number(v))}
             options={[
               { value: '0', label: 'Fine lines only' },

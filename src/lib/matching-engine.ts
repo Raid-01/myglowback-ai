@@ -133,6 +133,22 @@ function findSafetyViolations(rule: { ingredients: string[]; routine: unknown },
   return [...new Set(violations)];
 }
 
+/** prescriptionOptions badges must respect the same hard-safety profile as
+ * the routine itself — otherwise a pregnant/breastfeeding/TTC/under-18
+ * patient could still see e.g. "Hydroquinone 4%" offered as a badge even
+ * though hydroquinone is blocked for her at any concentration. Checked
+ * separately from findSafetyViolations because prescriptionOptions isn't
+ * part of `rule.ingredients` or routine text. */
+function filterSafePrescriptionOptions(options: string[], profile: SafetyProfile, under18: boolean): string[] {
+  return options.filter((text) => {
+    if (profile.blockRetinoids && containsTerm(text, RETINOID_TERMS)) return false;
+    if (profile.blockHydroquinone && containsTerm(text, HYDROQUINONE_TERMS)) return false;
+    if (profile.blockOralTXA && containsTerm(text, ORAL_TXA_TERMS)) return false;
+    if (under18 && containsTerm(text, ['tretinoin', 'tazarotene', 'trifarotene'])) return false;
+    return true;
+  });
+}
+
 /**
  * Hyper-focused, rule-based matcher (not a black-box model) so a clinic's
  * dispensing pharmacist can always see exactly which rule fired and why —
@@ -289,7 +305,7 @@ export async function matchAssessmentToRoutine(input: AssessmentInput): Promise<
     matchedRuleNames: scored.slice(0, 3).map((s) => s.rule.name),
     safetyBlockedIngredients: [...new Set(safetyBlockedIngredients)],
     escalationNote: top.escalationNote ?? null,
-    prescriptionOptions: top.prescriptionOptions ?? [],
+    prescriptionOptions: filterSafePrescriptionOptions(top.prescriptionOptions ?? [], safetyProfile, under18),
     canDispensePrescriptionTier,
   };
 }

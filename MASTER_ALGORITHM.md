@@ -282,7 +282,9 @@ so it's deliberately left out rather than added on an assumption.
 | Adapalene | 0.1% or 0.3% | 12–24 weeks | Retinoid | OTC at 0.1% |
 | Tazarotene | 0.05% or 0.1% | 12–24 weeks | Retinoid, potent | Prescription only |
 | Trifarotene | 0.005% | 12–24 weeks | Selective retinoid | Better tolerated |
-| Bakuchiol | 0.5–2% | 12–16 weeks | Retinol-like, comparable efficacy | Natural alternative, well-tolerated |
+| Retinaldehyde (Retinal) | 0.05–0.1% | 12–24 weeks | Retinoid; converts to retinoic acid in a single oxidation step (vs. Retinol's two) | **[NEW]** OTC. Ranked more potent than Retinol at equivalent concentration by dermatologist review (Dr. Elyse Love, board-certified — Skin Wellness Dermatology: "retinaldehyde is the most potent [OTC retinoid], but most difficult to stabilize"). Creidi et al. 1998: 0.05% retinaldehyde outperformed 0.05% retinol on fine lines/texture/pigmentation over 18 weeks. Saurat et al. 1994: 0.05% retinaldehyde produced epidermal/collagen changes comparable to prescription retinoic acid, with markedly better tolerability |
+| Retinol | 0.1–1.0% | 12–24 weeks | Retinoid; requires two enzymatic conversion steps to reach retinoic acid | **[NEW]** OTC, the most widely available and studied of the true retinoids. Kafi et al. 2007: 0.4% significantly improved fine wrinkles and procollagen expression over 24 weeks. Weaker than Retinaldehyde per the conversion-step distance from active retinoic acid, but well-evidenced on its own |
+| Bakuchiol | 0.5–2% | 12–16 weeks | Retinol-like, comparable efficacy | Natural alternative, well-tolerated. Not a true retinoid — sits below Retinaldehyde/Retinol/Retinyl esters in potency, positioned here as the gentlest option in this family, per the dermatologist-reviewed hierarchy above |
 | Hydroxypinacolone Retinoate | 0.1–0.5% | 12–16 weeks | Next-gen retinoid ester | Better tolerated than tretinoin |
 | Retinyl Retinoate | 0.1–0.5% | 12–16 weeks | Next-gen retinoid ester | Better tolerated |
 | Vitamin C | 10–20% | 12–24 weeks | Cofactor in collagen synthesis | Morning |

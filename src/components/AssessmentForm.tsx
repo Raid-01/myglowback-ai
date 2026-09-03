@@ -85,8 +85,8 @@ export function AssessmentForm({ patients }: { patients: { id: string; firstName
 
     const payload: Record<string, unknown> = {
       skinType: deriveSkinType(s.tZone, s.cheeks, s.pores),
-      sensitiveOverlay: deriveSensitiveOverlay(s.reactivity, s.diagnosedReactive, s.textureChangeType),
-      fitzpatrickType: deriveFitzpatrick(s.naturalTone, s.sunReaction),
+      sensitiveOverlay: deriveSensitiveOverlay(s.reactivity ?? 0, s.diagnosedReactive, s.textureChangeType),
+      fitzpatrickType: deriveFitzpatrick(s.naturalTone ?? 0, s.sunReaction ?? 0),
       concerns: s.concerns,
       severityByConcern: buildSeverityByConcern(s),
       allergies: s.allergies || undefined,

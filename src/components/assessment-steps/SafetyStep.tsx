@@ -13,6 +13,12 @@ export function SafetyStep({
   const showsPregnancyQuestions = state.biologicalSex === 'FEMALE' || state.biologicalSex === 'UNDISCLOSED';
   const alreadyPregnantOrBreastfeeding =
     state.pregnancyStatus === 'PREGNANT' || state.pregnancyStatus === 'BREASTFEEDING';
+  // 1.4 (menopause) only makes sense to ask from an age where it's
+  // plausible. 1.5 (contraception/HRT) and 1.6 (cycle/hot flashes)
+  // deliberately stay visible regardless of age — hormonal birth control is
+  // common well before this cutoff and remains clinically relevant to acne/
+  // melasma patterns even for younger patients.
+  const oldEnoughForMenopauseQuestion = !['UNDER_18', 'AGE_18_25', 'AGE_26_35'].includes(state.ageRange);
 
   return (
     <div className="space-y-5">
@@ -48,18 +54,20 @@ export function SafetyStep({
 
           {!alreadyPregnantOrBreastfeeding && (
             <>
-              {/* 1.4 */}
-              <ChoiceGroup
-                label="Have you gone through menopause?"
-                value={state.hormonalStage}
-                onChange={(v) => set('hormonalStage', v)}
-                options={[
-                  { value: 'REPRODUCTIVE', label: 'Not yet' },
-                  { value: 'PERIMENOPAUSAL', label: 'Perimenopausal (periods becoming irregular)' },
-                  { value: 'MENOPAUSAL', label: 'Yes, menopausal' },
-                  { value: 'NOT_APPLICABLE', label: 'Not applicable' },
-                ]}
-              />
+              {oldEnoughForMenopauseQuestion && (
+                /* 1.4 */
+                <ChoiceGroup
+                  label="Have you gone through menopause?"
+                  value={state.hormonalStage}
+                  onChange={(v) => set('hormonalStage', v)}
+                  options={[
+                    { value: 'REPRODUCTIVE', label: 'Not yet' },
+                    { value: 'PERIMENOPAUSAL', label: 'Perimenopausal (periods becoming irregular)' },
+                    { value: 'MENOPAUSAL', label: 'Yes, menopausal' },
+                    { value: 'NOT_APPLICABLE', label: 'Not applicable' },
+                  ]}
+                />
+              )}
               {/* 1.5 */}
               <YesNo
                 label="Currently on hormonal birth control or HRT?"

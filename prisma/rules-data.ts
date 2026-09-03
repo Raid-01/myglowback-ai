@@ -65,7 +65,7 @@ export const rules: SkincareRuleData[] = [
       name: 'Acne — Pregnancy-Safe',
       condition: { concerns: ['ACNE'] }, // no severity tag — becomes top scorer only once pregnancy/TTC/breastfeeding disqualifies the Adapalene-containing rules above
       routine: {
-        am: ['Gentle cleanser', 'Azelaic Acid 10% serum', 'Niacinamide serum', 'Mineral SPF 30+ (Zinc Oxide/Titanium Dioxide)'],
+        am: ['Gentle cleanser', 'Azelaic Acid 10% serum', 'Niacinamide serum', 'Fragrance-free moisturizer (Ceramides + Glycerin)', 'Mineral SPF 30+ (Zinc Oxide/Titanium Dioxide)'],
         pm: ['Gentle cleanser', 'Benzoyl Peroxide 2.5% spot treatment', 'Fragrance-free moisturizer (Ceramides + Glycerin)'],
       },
       ingredients: ['Azelaic Acid 10–15%', 'Benzoyl Peroxide 2.5–5%', 'Niacinamide'],
@@ -85,25 +85,44 @@ export const rules: SkincareRuleData[] = [
         am: ['Gentle cleanser', 'Vitamin C 10–20% + Ferulic Acid serum', 'Niacinamide moisturizer', 'Tinted SPF 30+ with iron oxides'],
         pm: ['Gentle cleanser', 'Azelaic Acid 10% serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
+      // Single-active start is deliberate, not a lesser routine — Section 2's
+      // own Treatment Duration Guidelines calls for "continue; consider
+      // adding a second OTC active" only if Mild doesn't improve in 4–8
+      // weeks. Tranexamic Acid is the documented next step (see
+      // escalationNote below), not something to push on day one.
       ingredients: ['Azelaic Acid 10%', 'Vitamin C 10–20%', 'Niacinamide'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Alpha Arbutin Brightening Serum'],
+      upsells: ['Alpha Arbutin Brightening Serum'],
       followUpDays: 28,
+      escalationNote: 'If no visible improvement after 4–8 weeks, adding Tranexamic Acid 3–5% is the evidence-based next step — Tranexamic Acid + Azelaic Acid + Niacinamide is the strongest available OTC-tier combination for pigmentation (MASTER_ALGORITHM.md Section 2).',
     },
     {
       name: 'Hyperpigmentation — Moderate',
       condition: { concerns: ['HYPERPIGMENTATION'], severity: ['MODERATE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Ferulic Acid serum', 'Niacinamide moisturizer', 'Tinted SPF 50+ with iron oxides — non-negotiable'],
-        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum, OR Hydroquinone 2% (OTC ceiling — max 3–4 months continuous use)', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
+        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% + Niacinamide serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
-      // Hydroquinone here means this rule is correctly excluded by the
-      // matching engine's hard-safety filter for pregnancy/breastfeeding/
-      // TTC/under-18 patients — they fall back to the Azelaic-based Mild
-      // rule automatically, which contains no blocked ingredients.
-      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Hydroquinone 2%', 'Niacinamide', 'Vitamin C'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Alpha Arbutin Brightening Serum'],
+      // Tranexamic Acid + Azelaic Acid + Niacinamide is Section 2's own
+      // "best available OTC-tier combination for pigmentation + redness" —
+      // this is the core routine, not an upsell. Deliberately no
+      // Hydroquinone anywhere in ingredients/routine text: an earlier
+      // version embedded it as an "OR" alternative inside this same step,
+      // which meant the matching engine's hard safety filter (which scans
+      // ingredients + routine text for any blocked term, all-or-nothing)
+      // disqualified this ENTIRE rule for pregnant/breastfeeding/TTC/
+      // under-18 patients — even though the safe Tranexamic+Azelaic option
+      // was sitting right there. That's a confirmed bug (would have failed
+      // TEST_SCENARIOS.md Priority 1 #3), not intended behavior — fixed by
+      // keeping this rule's ingredients/routine 100% free of any blocked
+      // term, full stop. 2% Hydroquinone remains a legitimate documented
+      // OTC option in MASTER_ALGORITHM.md Section 2, just not force-fit
+      // into this specific rule; a pharmacist can still reach for it
+      // directly, informed by the doc, without the app needing to
+      // algorithmically thread it through every rule.
+      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Niacinamide', 'Vitamin C'],
+      upsells: ['Alpha Arbutin Brightening Serum'],
       followUpDays: 56,
-      escalationNote: 'If no improvement after 12–16 weeks, may benefit from prescription-strength (>2%) intervention — refer for pharmacy/dermatologist evaluation.',
+      escalationNote: 'If no improvement after 12–16 weeks on this combination, may benefit from prescription-strength intervention — refer for pharmacy/dermatologist evaluation.',
       prescriptionOptions: ['Hydroquinone 4% (short-course)'],
     },
     {
@@ -111,12 +130,13 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['HYPERPIGMENTATION'], severity: ['SEVERE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Ferulic Acid serum', 'Niacinamide moisturizer', 'Tinted SPF 50+ with iron oxides — non-negotiable'],
-        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum, OR Hydroquinone 2% (OTC ceiling — max 3–4 months continuous use)', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
+        pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% + Niacinamide serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
-      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Hydroquinone 2%', 'Niacinamide', 'Vitamin C'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Alpha Arbutin Brightening Serum'],
+      // Same fix and same reasoning as the Moderate rule above.
+      ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Niacinamide', 'Vitamin C'],
+      upsells: ['Alpha Arbutin Brightening Serum'],
       followUpDays: 30,
-      escalationNote: 'Severe/widespread pigmentation, possibly melasma — 2% hydroquinone or this Azelaic/Tranexamic combination are both reasonable OTC starting points, not necessarily the ceiling. May benefit from above-2% prescription-strength intervention if unresponsive.',
+      escalationNote: 'Severe/widespread pigmentation, possibly melasma. May benefit from above-2% prescription-strength intervention if unresponsive to this combination.',
       prescriptionOptions: ['Hydroquinone 4% (short-course)'],
     },
     {
@@ -127,7 +147,7 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Tranexamic Acid 3–5% + Azelaic Acid 10% serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
       ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid 10%', 'Niacinamide', 'Vitamin C'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Alpha Arbutin Brightening Serum'],
+      upsells: ['Alpha Arbutin Brightening Serum'],
       followUpDays: 30,
       requiresLicensedPharmacy: true,
       escalationNote: 'Severe/widespread pigmentation, possibly melasma, not responding to 2% OTC hydroquinone or the Azelaic/Tranexamic combination. Above-2% options a pharmacist may consider dispensing: 4% hydroquinone short-course, or a compounded triple-combination formula (hydroquinone + tretinoin + a mild corticosteroid) — never continuous beyond 3–4 months.',
@@ -143,7 +163,7 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Niacinamide serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
       ingredients: ['Vitamin C 10–20%', 'Vitamin E', 'Ferulic Acid', 'Niacinamide'],
-      upsells: ['Mineral SPF 50 Sunscreen', 'Green Tea Antioxidant Serum'],
+      upsells: ['Green Tea Antioxidant Serum'],
       followUpDays: 30,
     },
     {
@@ -154,7 +174,9 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Niacinamide serum', 'Barrier-repair moisturizer (Ceramides + Hyaluronic Acid)'],
       },
       ingredients: ['Vitamin C 10–20%', 'Green Tea Extract (EGCG)', 'Niacinamide', 'Ferulic Acid'],
-      upsells: ['Mineral SPF 50 Sunscreen', 'Green Tea Antioxidant Serum'],
+      // SPF is already mandatory AM, and Green Tea Extract is already the
+      // routine's own moisturizer active — neither belongs as an upsell.
+      upsells: ['Resveratrol Antioxidant Serum', 'Baicalin Repair Serum'],
       followUpDays: 42,
     },
     {
@@ -165,7 +187,7 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Niacinamide serum', 'Barrier-repair moisturizer (Ceramides + Hyaluronic Acid)'],
       },
       ingredients: ['Vitamin C 10–20%', 'Green Tea Extract', 'Niacinamide', 'Ferulic Acid'],
-      upsells: ['Mineral SPF 50 Sunscreen', 'Green Tea Antioxidant Serum'],
+      upsells: ['Resveratrol Antioxidant Serum', 'Baicalin Repair Serum'],
       followUpDays: 30,
       escalationNote: 'Visible damage with inconsistent sunscreen use — daily SPF is the single highest-leverage change here. If broken capillaries or significant texture change are present, consider referral for in-office treatment (e.g. laser) alongside this routine.',
     },
@@ -175,10 +197,17 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['AGING'], severity: ['MILD'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C 10–20% serum', 'Peptide moisturizer', 'Broad-spectrum SPF 30+'],
-        pm: ['Gentle cleanser', 'Retinaldehyde or low-strength Retinol — start 2x/week, build up', 'Hyaluronic Acid + Ceramide moisturizer'],
+        pm: ['Gentle cleanser', 'Retinol 0.3% or Retinaldehyde 0.05% — start 2x/week, build up gradually', 'Hyaluronic Acid + Ceramide moisturizer'],
       },
-      ingredients: ['Vitamin C 10–20%', 'Peptides', 'Retinaldehyde', 'Hyaluronic Acid'],
-      upsells: ['Retinal 0.1% Night Cream', 'Bakuchiol Retinol-Alternative Serum'],
+      // Retinaldehyde and Retinol are both true retinoids (see
+      // MASTER_ALGORITHM.md Section 4) — Retinaldehyde needs only one
+      // metabolic conversion step to reach retinoic acid vs. Retinol's two,
+      // and dermatologist-reviewed sources rank it as the more potent of
+      // the two OTC options at equivalent concentration (Skin Wellness
+      // Dermatology, Dr. Elyse Love). Mild tier uses the lower end of each
+      // range as the conservative starting point.
+      ingredients: ['Vitamin C 10–20%', 'Peptides', 'Retinaldehyde 0.05%', 'Retinol 0.3%', 'Hyaluronic Acid'],
+      upsells: ['Bakuchiol Retinol-Alternative Serum'],
       followUpDays: 84,
     },
     {
@@ -186,10 +215,10 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['AGING'], severity: ['MODERATE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Vitamin E + Ferulic Acid serum', 'Peptide moisturizer', 'Broad-spectrum SPF 30+'],
-        pm: ['Gentle cleanser', 'Retinaldehyde/Retinol, nightly once tolerated', 'Hyaluronic Acid + Ceramide + Peptide night cream'],
+        pm: ['Gentle cleanser', 'Retinaldehyde 0.05–0.1% or Retinol 0.3–0.5%, nightly once tolerated', 'Hyaluronic Acid + Ceramide + Peptide night cream'],
       },
-      ingredients: ['Vitamin C', 'Peptides (Matrixyl, Argireline)', 'Retinaldehyde', 'Ceramides'],
-      upsells: ['Retinal 0.1% Night Cream', 'Coenzyme Q10 Serum'],
+      ingredients: ['Vitamin C', 'Peptides (Matrixyl, Argireline)', 'Retinaldehyde 0.05–0.1%', 'Retinol 0.3–0.5%', 'Ceramides'],
+      upsells: ['Coenzyme Q10 Serum'],
       followUpDays: 120,
       escalationNote: 'If limited improvement after 24 weeks, consider prescription-strength Tretinoin — refer to a dermatologist.',
       prescriptionOptions: ['Tretinoin 0.025–0.1%'],
@@ -199,10 +228,12 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['AGING'], severity: ['SEVERE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Vitamin E + Ferulic Acid serum', 'Peptide moisturizer', 'Broad-spectrum SPF 30+'],
-        pm: ['Gentle cleanser', 'Retinaldehyde/Retinol, nightly once tolerated', 'Hyaluronic Acid + Ceramide + Peptide + CoQ10 night cream'],
+        pm: ['Gentle cleanser', 'Retinaldehyde 0.1% or Retinol 0.5–1%, nightly once tolerated', 'Hyaluronic Acid + Ceramide + Peptide + CoQ10 night cream'],
       },
-      ingredients: ['Vitamin C', 'Peptides', 'Retinaldehyde', 'Coenzyme Q10', 'Ceramides'],
-      upsells: ['Retinal 0.1% Night Cream', 'Coenzyme Q10 Serum'],
+      ingredients: ['Vitamin C', 'Peptides', 'Retinaldehyde 0.1%', 'Retinol 0.5–1%', 'Coenzyme Q10', 'Ceramides'],
+      // CoQ10 already in this routine's own night cream — a genuinely new
+      // addition instead, also documented in Section 4.
+      upsells: ['Curcumin Anti-Inflammatory Serum'],
       followUpDays: 120,
       escalationNote: 'Significant firmness loss — this routine helps but has a ceiling. Consider referral for in-office collagen-stimulating treatment (e.g. microneedling, laser) alongside the daily routine.',
       prescriptionOptions: ['Tretinoin 0.025–0.1%'],
@@ -247,7 +278,7 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Azelaic Acid 10–15% (treats both active acne and post-acne marks)', 'Oil-free moisturizer (Hyaluronic Acid + Ceramides)'],
       },
       ingredients: ['Azelaic Acid 10–15%', 'Niacinamide', 'Vitamin C'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Alpha Arbutin Brightening Serum'],
+      upsells: ['Alpha Arbutin Brightening Serum'],
       followUpDays: 42,
     },
     {
@@ -269,7 +300,11 @@ export const rules: SkincareRuleData[] = [
         pm: ['Gentle cleanser', 'Tranexamic Acid + Azelaic Acid serum', 'Moisturizer (Hyaluronic Acid + Ceramides + Niacinamide)'],
       },
       ingredients: ['Tranexamic Acid 3–5%', 'Azelaic Acid', 'Vitamin C', 'Niacinamide'],
-      upsells: ['Tranexamic Acid Dark Spot Serum', 'Mineral SPF 50 Sunscreen'],
+      // Tranexamic Acid is already core PM here, and tinted SPF is already
+      // mandatory AM — neither belongs in upsells (a mandatory step framed
+      // as an optional add-on is exactly the confusion to avoid). Genuine
+      // add-ons only, both already-vetted and not duplicating the routine:
+      upsells: ['Alpha Arbutin Brightening Serum', 'Green Tea Antioxidant Serum'],
       followUpDays: 42,
     },
     {
@@ -277,10 +312,12 @@ export const rules: SkincareRuleData[] = [
       condition: { concerns: ['AGING', 'SUN_DAMAGE'] },
       routine: {
         am: ['Gentle cleanser', 'Vitamin C + Vitamin E + Ferulic Acid serum', 'Peptide moisturizer', 'Broad-spectrum SPF 50+'],
-        pm: ['Gentle cleanser', 'Retinaldehyde — build up gradually', 'Hyaluronic Acid + Ceramide moisturizer'],
+        pm: ['Gentle cleanser', 'Retinaldehyde 0.05–0.1% or Retinol 0.3–0.5% — build up gradually', 'Hyaluronic Acid + Ceramide moisturizer'],
       },
-      ingredients: ['Vitamin C', 'Vitamin E', 'Ferulic Acid', 'Peptides', 'Retinaldehyde'],
-      upsells: ['Retinal 0.1% Night Cream', 'Mineral SPF 50 Sunscreen'],
+      ingredients: ['Vitamin C', 'Vitamin E', 'Ferulic Acid', 'Peptides', 'Retinaldehyde 0.05–0.1%', 'Retinol 0.3–0.5%'],
+      // Retinoid and SPF are both already core here — neither belongs as
+      // an upsell. Genuine additions instead:
+      upsells: ['Coenzyme Q10 Serum', 'Resveratrol Antioxidant Serum'],
       followUpDays: 56,
     },
   ];

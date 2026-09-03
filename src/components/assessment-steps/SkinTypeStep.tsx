@@ -59,7 +59,7 @@ export function SkinTypeStep({
       {/* 2.4 */}
       <ChoiceGroup
         label="Does your skin sting, burn, itch, or turn red after a new product, or in reaction to heat/cold/wind?"
-        value={String(state.reactivity)}
+        value={state.reactivity == null ? '' : String(state.reactivity)}
         onChange={(v) => set('reactivity', Number(v))}
         options={[
           { value: '0', label: 'Rarely or never' },

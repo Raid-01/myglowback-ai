@@ -120,31 +120,31 @@ export interface FormState {
   tZone: Tri; // 2.1
   cheeks: Tri; // 2.2
   pores: string; // 2.3
-  reactivity: number; // 2.4 (0/1/2)
+  reactivity: number | null; // 2.4 (0/1/2)
   diagnosedReactive: boolean | null; // 2.5
 
   // Fitzpatrick (Part 3)
-  naturalTone: number; // 3.1 (0-5)
-  sunReaction: number; // 3.2 (0-5)
+  naturalTone: number | null; // 3.1 (0-5)
+  sunReaction: number | null; // 3.2 (0-5)
 
   // concerns (Part 4)
   concerns: string[];
 
   // severity (Parts 5A-5E) — only the relevant sub-object matters per selected concern
-  acneCount: number; // 5A.1
-  acneCysts: number; // 5A.2
+  acneCount: number | null; // 5A.1
+  acneCysts: number | null; // 5A.2
   acneChronic: boolean | null; // 5A.3
   acneScarring: boolean | null; // 5A.4
 
-  pigDarkness: number; // 5B.1
-  pigDuration: number; // 5B.2
+  pigDarkness: number | null; // 5B.1
+  pigDuration: number | null; // 5B.2
   pigSunReactive: boolean | null; // 5B.3
   pigPattern: string; // 5B.4
 
-  sunSpfHabit: number; // 5C.1
-  sunSignsCount: number; // 5C.2
+  sunSpfHabit: number | null; // 5C.1
+  sunSignsCount: number | null; // 5C.2
 
-  agingMain: number; // 5D.1
+  agingMain: number | null; // 5D.1
 
   glowGoal: string; // 5E.1
   glowRoutine: string; // 5E.2
@@ -159,13 +159,13 @@ export const INITIAL_STATE: FormState = {
   cycleRelatedFlares: null, cyclePattern: [], hotFlashesOrNightSweats: null,
   recentSkinTextureChange: null, textureChangeType: [],
   allergies: '', knownSkinConditions: '', currentMedications: '', previousTreatments: '',
-  tZone: '', cheeks: '', pores: '', reactivity: 0, diagnosedReactive: null,
-  naturalTone: 0, sunReaction: 0,
+  tZone: '', cheeks: '', pores: '', reactivity: null, diagnosedReactive: null,
+  naturalTone: null, sunReaction: null,
   concerns: [],
-  acneCount: 0, acneCysts: 0, acneChronic: null, acneScarring: null,
-  pigDarkness: 0, pigDuration: 0, pigSunReactive: null, pigPattern: '',
-  sunSpfHabit: 0, sunSignsCount: 0,
-  agingMain: 0,
+  acneCount: null, acneCysts: null, acneChronic: null, acneScarring: null,
+  pigDarkness: null, pigDuration: null, pigSunReactive: null, pigPattern: '',
+  sunSpfHabit: null, sunSignsCount: null,
+  agingMain: null,
   glowGoal: '', glowRoutine: '',
   goals: '',
 };
@@ -193,16 +193,16 @@ export function validateStep(id: StepId, s: FormState, isNewPatient: boolean): s
 export function buildSeverityByConcern(s: FormState): Record<string, string> {
   const severityByConcern: Record<string, string> = {};
   if (s.concerns.includes('ACNE')) {
-    severityByConcern.ACNE = bandSeverity(s.acneCount + s.acneCysts + (s.acneChronic ? 1 : 0), 1, 3);
+    severityByConcern.ACNE = bandSeverity((s.acneCount ?? 0) + (s.acneCysts ?? 0) + (s.acneChronic ? 1 : 0), 1, 3);
   }
   if (s.concerns.includes('HYPERPIGMENTATION')) {
-    severityByConcern.HYPERPIGMENTATION = bandSeverity(s.pigDarkness + s.pigDuration, 1, 2);
+    severityByConcern.HYPERPIGMENTATION = bandSeverity((s.pigDarkness ?? 0) + (s.pigDuration ?? 0), 1, 2);
   }
   if (s.concerns.includes('SUN_DAMAGE')) {
-    severityByConcern.SUN_DAMAGE = bandSeverity(s.sunSpfHabit + s.sunSignsCount, 1, 3);
+    severityByConcern.SUN_DAMAGE = bandSeverity((s.sunSpfHabit ?? 0) + (s.sunSignsCount ?? 0), 1, 3);
   }
   if (s.concerns.includes('AGING')) {
-    severityByConcern.AGING = bandSeverity(s.agingMain, 0, 1);
+    severityByConcern.AGING = bandSeverity(s.agingMain ?? 0, 0, 1);
   }
   // GLOWING_SKIN intentionally has no severity tier — see ASSESSMENT_QUESTIONNAIRE.md Part 5E
   return severityByConcern;
