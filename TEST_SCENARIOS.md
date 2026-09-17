@@ -1,163 +1,215 @@
 # MyGlowBack.AI — Assessment & Algorithm Test Plan
 
-**How to use this:** for each scenario, run a real assessment through the
-form with the listed answers, then check the result against "What should
-happen." Priority 1 scenarios are the safety-critical ones — test these
-before anything else. Priority 2 rounds out completeness once Priority 1 is
-solid.
+**How to use this:** every scenario below tells you exactly which account to
+log in as, exactly which buttons/fields to use, and exactly what you should
+see. Priority 1 scenarios are safety-critical — test these first. Priority 2
+rounds out completeness once Priority 1 is solid.
+
+## Accounts you'll use for every scenario below
+
+Created by `setup-test-accounts.sql` — if you haven't run that yet, do that
+first, then come back here.
+
+| Role | Email | Password | Use it for |
+|---|---|---|---|
+| Super Admin | `admin@myglowback.ai` | `ChangeMe123!` | Scenarios #37–40, verifying the sandbox clinic for #9 |
+| Sandbox Clinic Admin | `admin@myglowback-test.ng` | `ChangeMe123!` | Most scenarios below — this is your main testing login |
+| Sandbox Staff #1 | `staff1@myglowback-test.ng` | `ChangeMe123!` | Role-based access tests; will be tagged Pharmacist |
+| Sandbox Staff #2 | `staff2@myglowback-test.ng` | `ChangeMe123!` | Role-based access tests; stays Support Staff |
+
+**Do not use your real GlowHaus login for any of this** — that's your real
+business data. Everything below runs against "MyGlowBack Test Sandbox," a
+completely separate clinic that only exists for testing.
+
+**The one screen you'll use over and over:** log in, go to
+`/dashboard/assessments/new`, create/select any test patient (the name never
+matters), click through the wizard answering only what each scenario tells
+you to, and land on the results page to check what it produced. Everything
+else on the way (age, other concerns, safety questions) can be anything
+unless a scenario specifically says otherwise.
 
 ---
 
 ## Priority 1 — Safety-Critical (test these first)
 
 These prove the hard-block logic actually blocks things, not just that it
-exists in the code.
+exists in the code. **Log in as Sandbox Clinic Admin for all six.**
 
-| # | Patient archetype | Key answers to enter | What should happen |
+| # | Patient archetype | Exact answers to enter | What should happen |
 |---|---|---|---|
-| 1 | Pregnant, acne | Sex: Female · Pregnancy: Pregnant · Concern: Acne (any severity) | Routine uses **Azelaic Acid + Benzoyl Peroxide only** — Adapalene must NOT appear anywhere in the result, regardless of severity answers given |
-| 2 | Trying to conceive, aging | Sex: Female · Pregnancy: Trying to conceive · Concern: Aging | Routine uses **Bakuchiol**, not Retinaldehyde/Retinol — this is the extended TTC block in action |
-| 3 | Breastfeeding, hyperpigmentation | Sex: Female · Pregnancy: Breastfeeding · Concern: Hyperpigmentation, Severe | Should still get the normal Severe hyperpigmentation routine (Tranexamic + Azelaic) — this concern's rules never contained hydroquinone/retinoids to begin with, so nothing should be blocked or missing here. **If the routine comes back empty or generic-fallback, that's a bug** |
-| 4 | Under 18, acne | Age: Under 18 · Concern: Acne, Severe | Should get the normal Severe acne routine (Benzoyl Peroxide + **Adapalene 0.1% is fine for minors**) — confirm Adapalene isn't wrongly blocked |
-| 5 | Male patient | Sex: Male | Confirm the pregnancy/menopause/hormonal questions **never appear on screen at all** — not hidden-but-present, actually absent from the flow |
-| 6 | "Prefer not to say" | Sex: Prefer not to say | Confirm pregnancy questions **do** appear (this branch should behave like Female, not like Male) |
+| 1 | Pregnant, acne | Sex: Female · when the pregnancy question appears, pick Pregnant · Concern: Acne (any severity answers) | Result routine uses **Azelaic Acid + Benzoyl Peroxide only**. Read every line of the AM and PM routine — Adapalene must not appear anywhere |
+| 2 | Trying to conceive, aging | Sex: Female · Pregnancy question: Trying to conceive · Concern: Aging (any severity) | Routine uses **Bakuchiol**, not Retinaldehyde or Retinol |
+| 3 | Breastfeeding, hyperpigmentation | Sex: Female · Pregnancy question: Breastfeeding · Concern: Hyperpigmentation only · Severity answers: "Several shades darker/widespread" + "Over a year" (→ Severe) | Should get **"Hyperpigmentation — Severe"** with Tranexamic Acid + Azelaic Acid in the core routine. **If you land on "Hyperpigmentation — Mild" instead, or an empty/generic result, that's a bug** — Severe should never get downgraded for this patient |
+| 4 | Under 18, acne | Age range: Under 18 · Concern: Acne · Severity answers to hit Severe (15+ breakouts, several cysts, chronic 3+ months) | Routine should include **Adapalene 0.1%** — confirm it's NOT missing or swapped out just because the patient is a minor |
+| 5 | Male patient | Sex: Male | Keep clicking through Part 1 — confirm the pregnancy/menopause/hormonal questions **never appear on screen at all**, not even briefly |
+| 6 | "Prefer not to say" | Sex: Prefer not to say | Confirm the pregnancy question **does** appear — this should behave like Female, not like Male |
 
 ---
 
 ## Priority 1 — Pharmacy Verification Gate
 
-| # | Scenario | Setup | What should happen |
-|---|---|---|---|
-| 7 | Unverified clinic, severe pigmentation | Use a clinic that has never been through Super Admin verification · Concern: Hyperpigmentation, Severe | Should get the plain "Hyperpigmentation — Severe" rule. Escalation note should be **generic** ("may benefit from prescription-strength intervention") — must NOT mention hydroquinone or Kligman's by name |
-| 8 | Clinic claims Pharmacy but isn't verified yet | Set `licenseType = PHARMACY` on a clinic but leave `licenseVerifiedAt` null · same test as #7 | Must behave **identically to #7** — self-declaring pharmacy status must not unlock anything on its own |
-| 9 | Verified pharmacy | Super Admin sets `licenseType = PHARMACY` and `licenseVerifiedAt` to a real timestamp on a clinic · same test as #7 | Should now get "Hyperpigmentation — Severe (Pharmacy-Verified)" — escalation note **does** name hydroquinone/Kligman's specifically, framed as "requires a prescription," never as a direct instruction |
+**This is the section that tripped you up before — here's the exact
+sequence, start to finish.** All three scenarios use the same sandbox
+clinic, moving it through three states in order. Do them in this order —
+#8 and #9 depend on #7 already being done.
+
+### #7 — Unverified clinic (do this first, no setup needed)
+
+The sandbox clinic already starts in this state — nothing to configure.
+
+1. Log in as **Sandbox Clinic Admin**
+2. `/dashboard/assessments/new` → any patient → Concern: **Hyperpigmentation only**
+3. Severity answers: "Several shades darker/widespread" + "Over a year"
+4. Finish → check the result
+
+**Expect:** routine titled **"Hyperpigmentation — Severe"** (not
+"Pharmacy-Verified"). If there's an escalation note, it should say something
+generic like *"may benefit from above-2% prescription-strength
+intervention"* — it must **not** name hydroquinone or mention Kligman's/
+triple-combination by name.
+
+### #8 — Clinic claims Pharmacy but isn't verified yet
+
+1. Log in as **Super Admin** (`admin@myglowback.ai`)
+2. Find **MyGlowBack Test Sandbox** in the clinic list
+3. In the license editor next to it, set **License Type → Pharmacy**, but
+   **do not** check/set verified yet
+4. Log back in as **Sandbox Clinic Admin**, repeat the exact same assessment
+   as #7 (Hyperpigmentation, same severity answers)
+
+**Expect:** identical result to #7. Self-declaring "we're a pharmacy" must
+not unlock anything on its own — only verification does.
+
+### #9 — Verified pharmacy
+
+1. Log in as **Super Admin** again
+2. Same clinic, same license editor — this time actually mark it
+   **verified** (enter any PCN number, confirm)
+3. Log back in as **Sandbox Clinic Admin**, repeat the same assessment once
+   more
+
+**Expect:** now you should see **"Hyperpigmentation — Severe
+(Pharmacy-Verified)"**, and the escalation note now does name hydroquinone/
+Kligman's specifically — but still framed as "a pharmacist may consider
+dispensing," never as a direct instruction. You should also see a
+**"Prescription only"** badge on the result page listing the prescription
+options.
+
+*(Leave the clinic verified afterward — later scenarios below assume it's
+already verified.)*
+
+---
+
+## Priority 1 — Role-Based Access
+
+This is the section with the most moving parts — three different logins,
+testing what each can and can't reach. **The single most important test in
+this whole document is #47** — a real leak there means one clinic could see
+another clinic's actual patient data.
+
+| # | Do this | Expect |
+|---|---|---|
+| 37 | Log in as **Super Admin**. Look at the left nav. | Should see "Super Admin." Also notice whether Overview/Patients/etc. show too — Super Admin has no `clinicId` of its own, so this is worth a screenshot either way |
+| 38 | While still Super Admin, go straight to `/dashboard` (not `/dashboard/super-admin`) | Should not crash or show broken/blank data — either a sensible empty state or a redirect |
+| 39 | Still Super Admin: set a locked price on the sandbox clinic, then check that clinic's billing/checkout page (as Clinic Admin) | The locked amount should be what actually shows at checkout, not the standard rate |
+| 40 | Still Super Admin, go to `/dashboard/super-admin/analytics` | Should load a KPI dashboard — conversion rate, MRR, weekly trends |
+| 41 | Log in as **Sandbox Clinic Admin**. Type `/dashboard/super-admin` directly into the address bar | Should be blocked outright, not just missing from the nav |
+| 42 | Still Clinic Admin: try calling the locked-price API directly (browser dev tools → Network tab, or a tool like Postman) | Should be rejected — only Super Admin may set locked pricing |
+| 43 | Still Clinic Admin: open Inventory and Billing normally through the nav | Both should work fully, no restriction |
+| 44 | Log in as **Sandbox Staff #1 or #2**. Type `/dashboard/billing` and `/dashboard/inventory` directly into the address bar | Should be blocked outright — this is server-enforced, confirmed directly in the code |
+| 45 | Still a Staff account: run a full assessment end to end (`/dashboard/assessments/new`) | Should work completely — this is Staff's core job |
+| 46 | Still a Staff account: go to `/dashboard/feedback`, submit an item, vote on it | Should work — Staff can submit and vote same as Clinic Admin |
+| 47 | **The important one.** While logged in as any Sandbox account, open a real assessment/patient from your **real GlowHaus clinic** by guessing or editing the URL's ID (copy a GlowHaus assessment ID from your other browser tab/session, paste it into the sandbox session's address bar) | Must be blocked. If it loads GlowHaus data while logged into the sandbox account, that's a critical leak — stop and flag it immediately, don't wait to finish the rest of the checklist |
+| 48 | As Super Admin, go to the sandbox clinic's settings and set it inactive/lapsed. Try logging in as Sandbox Clinic Admin and Staff | Both should hit a lockout screen. Then log in as Super Admin again and confirm **you're not** locked out of that same clinic — Super Admin needs to be able to review/reactivate lapsed clinics |
+
+*(After #48, remember to set the sandbox clinic back to active if you want to keep testing with it.)*
 
 ---
 
 ## Priority 2 — Severity Tier Coverage
 
-Confirms each concern's Mild/Moderate/Severe branch actually pulls the
-right rule, not just that severity is being calculated.
+**Log in as Sandbox Clinic Admin.** Same screen every time —
+`/dashboard/assessments/new` → pick the one concern listed → enter exactly
+the answers shown → check the result matches.
 
-| # | Concern | Answers to trigger this tier | Expected rule |
+| # | Concern | Exact answers | Expected result |
 |---|---|---|---|
-| 10 | Acne | 0–5 breakouts, no cysts, not chronic | Acne — Mild |
-| 11 | Acne | 6–15 breakouts, a few cysts | Acne — Moderate |
-| 12 | Acne | 15+ breakouts, several cysts, chronic 3+ months | Acne — Severe (with dermatologist-referral escalation note) |
-| 13 | Hyperpigmentation | Barely noticeable, under 3 months | Hyperpigmentation — Mild |
-| 14 | Hyperpigmentation | A shade or two darker, 3–12 months | Hyperpigmentation — Moderate |
-| 15 | Hyperpigmentation | Several shades darker, over a year | Hyperpigmentation — Severe |
-| 16 | Sun Damage | Daily SPF + reapply, 0 visible signs | Sun Damage — Mild |
-| 17 | Sun Damage | Never wears SPF, 3+ visible signs | Sun Damage — Severe |
-| 18 | Aging | Fine lines only | Aging — Mild |
-| 19 | Aging | Loss of firmness/sagging | Aging — Severe |
+| 10 | Acne | 0–5 breakouts · no cysts · "no" to chronic 3+ months | Acne — Mild |
+| 11 | Acne | 6–15 breakouts · a few cysts | Acne — Moderate |
+| 12 | Acne | 15+ breakouts · several cysts · "yes" to chronic 3+ months | Acne — Severe, with a dermatologist-referral note |
+| 13 | Hyperpigmentation | "Barely noticeable" · "Under 3 months" | Hyperpigmentation — Mild |
+| 14 | Hyperpigmentation | "A shade or two darker" · "3–12 months" | Hyperpigmentation — Moderate |
+| 15 | Hyperpigmentation | "Several shades darker" · "Over a year" | Hyperpigmentation — Severe |
+| 16 | Sun Damage | "Daily, reapply outdoors" · 0 visible signs selected | Sun Damage — Mild |
+| 17 | Sun Damage | "Never" wears sunscreen · 3+ visible signs selected | Sun Damage — Severe |
+| 18 | Aging | "Fine lines only" | Aging — Mild |
+| 19 | Aging | "Loss of firmness/sagging" | Aging — Severe |
 
 ---
 
 ## Priority 2 — Objective Skin Type Determination
 
-Confirms the computed skin type actually matches the decision table, not
-just that *a* skin type comes back.
+Same screen, but this time it's the T-zone/cheeks/pores questions in Part 2
+that matter — concern selection doesn't matter for these, pick anything.
 
-| # | T-zone answer | Cheeks answer | Pores answer | Expected result |
+| # | T-zone | Cheeks | Pores | Expected |
 |---|---|---|---|---|
 | 20 | Shiny/oily | Shiny/oily | Visible, most of face | OILY |
 | 21 | Tight/dry | Tight/dry | Barely visible | DRY |
 | 22 | Comfortable | Comfortable | Barely visible | NORMAL |
-| 23 | Shiny/oily | Tight/dry | Visible mainly T-zone | COMBINATION (the classic pattern — most important one to verify) |
-| 24 | Any of the above | — | — | Additionally answer "frequently" to reactivity + "yes" to doctor-diagnosed reactive condition → confirm `sensitiveOverlay` is flagged **independently** of whatever base type came back (e.g. test this on top of an OILY result, not just a DRY one — sensitivity shouldn't only work for dry skin) |
+| 23 | Shiny/oily | Tight/dry | Visible mainly T-zone | COMBINATION — the one worth double-checking, it's the classic mixed pattern |
+| 24 | Any of the above, plus: answer "Frequently" to the stinging/burning question **and** "Yes" to doctor-diagnosed reactive condition | | | Confirms sensitivity is tracked independently — do this once on top of an OILY result specifically, not just DRY, to confirm it's not accidentally tied to skin type |
 
 ---
 
 ## Priority 2 — Fitzpatrick Range
 
-| # | Natural tone answer | Sun reaction answer | Expected type |
+Part 3 questions — natural tone and sun-reaction. Concern doesn't matter.
+
+| # | Natural tone answer | Sun reaction answer | Expected |
 |---|---|---|---|
-| 25 | Very pale/ivory | Always burns, never tans | Type I |
-| 26 | Deeply pigmented, dark brown to black | Never burns, always deeply pigments | Type VI |
-| 27 | Medium/tan-brown | Rarely burns, tans well | Type IV (mid-range — this is where most real patients will likely land, worth extra attention) |
+| 25 | "Very pale/ivory" | "Always burns badly, never tans" | Type I |
+| 26 | "Deeply pigmented, dark brown to black" | "Never burns, always deeply pigments" | Type VI |
+| 27 | "Medium/tan-brown" | "Rarely burns, tans well" | Type IV — worth extra attention, most real patients will land here |
 
 ---
 
 ## Priority 2 — Combination Rules
 
-The most important thing to verify here: when two concerns are selected,
-the result should be **one coherent combined routine**, not the routine for
-whichever concern happened to score slightly higher with the second one
+Select **two** concerns on the Concerns step (not one). The thing to check:
+one coherent combined routine — not one concern's routine with the other
 silently dropped.
 
-| # | Concerns selected | Expected rule | What to check specifically |
+| # | Select both | Expect | Specifically check |
 |---|---|---|---|
-| 28 | Acne + Hyperpigmentation | Combination — Acne + Hyperpigmentation | Azelaic Acid should be the anchor active — confirm it's NOT just the plain Acne-tier rule with hyperpigmentation quietly missing |
-| 29 | Acne + Aging | Combination — Acne + Aging | Single Adapalene-based routine, not two competing retinoid steps |
-| 30 | Hyperpigmentation + Sun Damage | Combination — Hyperpigmentation + Sun Damage | Tinted sunscreen should be explicitly called out as non-negotiable |
-| 31 | Aging + Sun Damage | Combination — Aging + Sun Damage | Antioxidant stack (Vitamin C/E/Ferulic) should be prominent |
-| 32 | All 5 concerns at once | *(stress test — no specific expected rule)* | Confirm the app doesn't crash or return an empty result. Whatever rule wins, it should still be a real, complete routine |
+| 28 | Acne + Hyperpigmentation | Combination routine | Azelaic Acid is the anchor active — not a plain Acne routine with hyperpigmentation missing |
+| 29 | Acne + Aging | Combination routine | One Adapalene-based routine — not two separate retinoid steps competing |
+| 30 | Hyperpigmentation + Sun Damage | Combination routine | Tinted sunscreen called out as non-negotiable |
+| 31 | Aging + Sun Damage | Combination routine | Vitamin C/E/Ferulic antioxidant stack is prominent |
+| 32 | All 5 concerns at once | *(stress test)* | Just confirm it doesn't crash or return empty — any real, complete routine is a pass |
 
 ---
 
 ## Priority 2 — Glowing Skin & Fallback
 
-| # | Scenario | What should happen |
+| # | Do this | Expect |
 |---|---|---|
-| 33 | Only "Glowing Skin" selected | Six-step routine (Clean/Nourish/Moisturise/Protect/Pamper/Treat) — no severity questions should appear for this concern at all |
-| 34 | Allergy conflict | Select Acne or Hyperpigmentation, then list "azelaic acid" under allergies | The engine should skip any rule containing azelaic acid and fall back to the next-best valid rule — confirm the result never actually contains azelaic acid, and isn't just the empty generic fallback if a valid alternative rule exists |
-| 35 | Genuinely no rule fits | *(harder to trigger deliberately — worth trying a severity/concern combo you don't expect coverage for)* | Should return the safe generic fallback (gentle cleanser, fragrance-free moisturizer, mineral SPF) rather than erroring, with `matchedRuleNames` showing "No rule matched — flagged for pharmacist review" |
+| 33 | Select only "Glowing Skin" | A six-step routine (Clean/Nourish/Moisturise/Protect/Pamper/Treat) — no severity questions should appear for this concern at all |
+| 34 | Select Acne or Hyperpigmentation, then in the allergies free-text field type "azelaic acid" | The result should skip any rule containing azelaic acid and fall back to the next valid rule — confirm azelaic acid genuinely doesn't appear, and it's not just the empty generic fallback if a real alternative exists |
+| 35 | Try a severity/concern combo you don't expect coverage for | Should return the safe generic fallback (gentle cleanser, fragrance-free moisturizer, mineral SPF), never an error |
 
 ---
 
 ## Priority 2 — Products & Upsells
 
-| # | Check | What should happen |
+| # | Do this | Expect |
 |---|---|---|
-| 36 | Run any assessment against the seeded demo clinic (GlowHaus) | In-stock products tagged with a matching concern should appear as matched products; products marked `isUpsell: true` should appear separately in the upsells list, not mixed into the main recommendation |
+| 36 | Run any assessment against your real **GlowHaus** clinic (its actual seeded inventory) | In-stock products tagged with a matching concern appear as matched products; anything marked as an upsell shows separately, not mixed into the main routine |
 
 ---
 
-## Priority 1 — Role-Based Access (Super Admin / Clinic Admin / Staff)
+## After you're done
 
-Three roles exist, flat — no sub-levels within Staff. This section tests
-*who can see and do what*, at two levels that matter separately: whether
-the nav even shows the option (cosmetic), and whether the underlying page
-or API route actually blocks it if someone tries the direct URL anyway
-(the real security boundary).
-
-**Two things confirmed while building this checklist, worth knowing before
-you start:**
-- **Billing and Inventory pages already enforce `CLINIC_ADMIN`-only at the
-  server level**, not just by hiding the nav link — confirmed directly in
-  the code. A Staff account hitting those URLs directly should get blocked,
-  not just fail to see the link.
-- **There's currently no UI to actually mark a clinic as a verified
-  pharmacy** — `licenseVerifiedAt` is read by the matching engine, but
-  nothing anywhere lets a Super Admin *set* it yet. This means scenarios
-  #7–9 above (the pharmacy-verification-gate tests) can't actually be run
-  end-to-end through the app right now — only by editing the database
-  directly in Neon's SQL Editor, the same way we cleared test clinics
-  earlier. Worth building a small editor for this (same pattern as the
-  locked-price one) before those specific scenarios can be properly tested.
-
-| # | Role | Test | What should happen |
-|---|---|---|---|
-| 37 | Super Admin | Log in, check the nav | Should see "Super Admin" — worth checking whether Overview/New Assessment/Patients/etc. also show, since a Super Admin typically has no `clinicId` of their own |
-| 38 | Super Admin | Visit `/dashboard` (the normal Overview page) directly | This page assumes a `clinicId` exists — if a pure Super Admin account has none, confirm this doesn't crash or show broken data rather than a sensible empty/redirect state |
-| 39 | Super Admin | Set a locked price on a clinic, then check that clinic's checkout | The locked amount should be what Paystack actually charges, not the standard rate |
-| 40 | Super Admin | Visit `/dashboard/super-admin/analytics` | Loads the KPI dashboard — conversion rate, MRR, weekly trends, never-activated list |
-| 41 | Clinic Admin | Try visiting `/dashboard/super-admin` directly by typing the URL | Should be blocked, not just missing from nav — this is the real test, not whether the link shows |
-| 42 | Clinic Admin | Try calling the locked-price API directly (e.g. via browser dev tools) | Should be rejected — only `SUPER_ADMIN` may set locked pricing |
-| 43 | Clinic Admin | Check Inventory and Billing both work normally | Full access, as expected |
-| 44 | Staff | Try visiting `/dashboard/billing` and `/dashboard/inventory` directly | Confirmed server-enforced — should be blocked outright, not just hidden from nav |
-| 45 | Staff | Run a full assessment end to end | Should work fully — this is Staff's core job, no restriction expected here |
-| 46 | Staff | Visit `/dashboard/feedback` | Should work — Staff can submit and vote, same as Clinic Admin |
-| 47 | Any role | Try to view another clinic's patient, assessment, or invoice by guessing/editing the URL's ID | Should be blocked — every query is meant to be scoped to the logged-in user's own `clinicId`. This is the single most important test in this whole section: a leak here means one clinic could see another's patient data |
-| 48 | Any role | Log in from an inactive/lapsed clinic (`isActive: false`) | Staff and Clinic Admin should hit the lockout screen. Confirm Super Admin is *not* similarly locked out — they need to be able to work with lapsed clinics (e.g. to review or reactivate them) |
-
-**The one to spend the most care on is #47.** Everything else here is about UI polish and role boundaries; that one is about whether one clinic could ever see another clinic's real patient data. Worth deliberately trying to break it, not just casually clicking around.
-
-- **A Priority 1 failure is a stop-everything bug** — it means an unsafe
-  ingredient could reach a real patient, or the pharmacy gate can be
-  bypassed. Screenshot it exactly like the Render/Neon debugging earlier in
-  this project and it'll get fixed before anything else.
-- **A Priority 2 failure** usually means a rule's `condition` tags need
-  adjusting, not that the underlying safety logic is broken — still worth
-  flagging, just less urgent.
+- A **Priority 1 failure is stop-everything** — screenshot it exactly like we've done with bugs earlier in this project, and it gets fixed before anything else.
+- A **Priority 2 failure** usually just means a rule's condition needs a small adjustment — still worth flagging, less urgent.
+- Once this whole list passes, you're done with QA for this build — genuinely clear to move to prospecting.

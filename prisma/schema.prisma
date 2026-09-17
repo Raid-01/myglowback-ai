@@ -46,6 +46,21 @@ model Clinic {
   // return" (see initiate/route.ts and cron/check-subscriptions/route.ts).
   lockedAnnualPrice           Float?
   lockedMonthlyPrice          Float?
+  // AOV tracking. startAOV is captured once, ever — the baseline average
+  // order value from before the clinic started using the app, entered by
+  // the Clinic Admin the first time they visit Overview. startAOVSetAt is
+  // what the UI checks to know whether to still show that one-time capture
+  // prompt. Current AOV is never stored — it's always computed live from
+  // real Sale records (see src/lib/aov.ts), so it's never stale. Target
+  // AOVs are independently settable at each horizon (a clinic's yearly
+  // ambition isn't just its monthly target × 12) — monthly is the one
+  // shown day-to-day; the others are for longer-range planning.
+  startAOV                    Float?
+  startAOVSetAt               DateTime?
+  targetAOVMonthly            Float?
+  targetAOVQuarterly          Float?
+  targetAOVHalfYearly         Float?
+  targetAOVYearly             Float?
   locations         Location[]
   staff             User[]
   patients          Patient[]

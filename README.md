@@ -20,6 +20,35 @@ for or know how to check themselves.
 
 ## Current status (update this as things change)
 
+0. **AOV tracking built — live on Overview.** Five new `Clinic` fields:
+   `startAOV`/`startAOVSetAt` (captured once, ever — a real server-side
+   guard in `/api/clinic/aov` silently ignores any attempt to change it
+   after the first save, not just a UI that stops asking), and four
+   independent target fields (`targetAOVMonthly/Quarterly/HalfYearly/Yearly`
+   — a clinic's yearly ambition isn't just its monthly target × 12, so each
+   is its own number, set once via the same small editor pattern used
+   elsewhere in this app). **Current AOV is never stored** — it's computed
+   live every page load from real `Sale` rows (`src/lib/aov.ts`), grouped
+   into actual orders (same `assessmentId` = one visit) rather than
+   averaging per line-item, which would understate AOV any time a patient
+   buys more than one product. Color-coding is deliberate: Target AOV is
+   always honey-toned, full stop — same color whether hit or missed, so it
+   reads as "the goal," never "the result." Current AOV is sage when at/
+   above target, amber (`warn`) when below — an actual signal, not just a
+   different color for its own sake.
+   **Not done, on purpose:** no cron/notification when a clinic misses its
+   target — this is a passive dashboard readout for now, not an alert
+   system.
+1. **`TEST_SCENARIOS.md` rewritten with real step-by-step instructions.**
+   The previous version listed *what* to check but not *how to get there*
+   — several scenarios (the pharmacy-verification gate especially) required
+   knowing things (which clinic, which login, which exact click sequence)
+   that weren't written down anywhere, which is exactly what caused real
+   confusion testing it live. Every scenario now names the exact account to
+   log in as and the exact steps, using the sandbox accounts created by
+   `setup-test-accounts.sql`.
+
+
 0. **QA pass on the live app surfaced real bugs — all fixed, documented honestly below.**
    - **The pre-checked bug was only partially fixed last time.** The earlier fix covered every boolean yes/no question; it missed that every *numeric-scored* question (Fitzpatrick's two questions, reactivity, and all 7 severity sub-questions) had the identical underlying problem — these fields defaulted to `0`, and `0` always matched whichever option happened to be listed first, so it rendered as pre-selected. Same root cause (no way to represent "unanswered" separately from a real answer), different field type. All 9 fields fixed the same way as the booleans: `number | null`, `null` = genuinely unanswered.
    - **Confirmed algorithm bug, would have failed `TEST_SCENARIOS.md` Priority 1 #3.** The Hyperpigmentation Moderate/Severe rules had Hydroquinone embedded as an "OR" alternative inside the same step as the safe Tranexamic Acid + Azelaic Acid combination. The matching engine's safety filter disqualifies a rule entirely if *any* blocked term appears anywhere in it — so a breastfeeding patient with Severe hyperpigmentation was silently getting bumped down to the Mild-tier rule, not the Severe routine she needed. Fixed by removing Hydroquinone from these rules' ingredients/routine text entirely — Tranexamic Acid + Azelaic Acid + Niacinamide (already documented as the best available OTC-tier combination) is now the clean core routine, with nothing in it that can trigger the safety filter.

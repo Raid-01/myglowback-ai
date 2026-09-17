@@ -6,6 +6,9 @@ import { StatsCard } from '@/components/StatsCard';
 import { formatNaira } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { computeAOV, horizonStart } from '@/lib/aov';
+import { StartAOVPrompt } from '@/components/AOVSetup';
+import { AOVDisplay } from '@/components/AOVDisplay';
 
 export default async function DashboardOverviewPage() {
   const session = await requireSession();
@@ -13,7 +16,7 @@ export default async function DashboardOverviewPage() {
 
   const clinicId = session.user.clinicId!;
 
-  const [patientCount, assessmentCount, products, recentAssessments] = await Promise.all([
+  const [patientCount, assessmentCount, products, recentAssessments, clinic] = await Promise.all([
     prisma.patient.count({ where: { clinicId } }),
     prisma.assessment.count({ where: { clinicId } }),
     prisma.product.findMany({ where: { clinicId } }),
@@ -22,6 +25,17 @@ export default async function DashboardOverviewPage() {
       orderBy: { createdAt: 'desc' },
       take: 5,
       include: { patient: true },
+    }),
+    prisma.clinic.findUnique({
+      where: { id: clinicId },
+      select: {
+        startAOV: true,
+        startAOVSetAt: true,
+        targetAOVMonthly: true,
+        targetAOVQuarterly: true,
+        targetAOVHalfYearly: true,
+        targetAOVYearly: true,
+      },
     }),
   ]);
 
@@ -39,6 +53,19 @@ export default async function DashboardOverviewPage() {
   });
   const todaysRevenue = todaysSales.reduce((sum, s) => sum + s.amount, 0);
 
+  // AOV: fetch this month's sales once, slice into today/week/month client-
+  // side rather than three separate queries — cheap since Sale rows are
+  // small and month-scoped.
+  const monthStart = horizonStart('month');
+  const weekStart = horizonStart('week');
+  const monthSales = await prisma.sale.findMany({ where: { clinicId, createdAt: { gte: monthStart } } });
+  const weekSales = monthSales.filter((s) => s.createdAt >= weekStart);
+  const todaySales = monthSales.filter((s) => s.createdAt >= startOfToday);
+
+  const currentMonthAOV = computeAOV(monthSales);
+  const currentWeekAOV = computeAOV(weekSales);
+  const currentTodayAOV = computeAOV(todaySales);
+
   return (
     <div>
       <h1 className="font-display text-2xl font-medium text-clinical-text">Overview</h1>
@@ -54,6 +81,19 @@ export default async function DashboardOverviewPage() {
           <StatsCard label="Today's Revenue" value={formatNaira(todaysRevenue)} icon={Wallet} />
         </a>
       </div>
+
+      {!clinic?.startAOVSetAt && <div className="mt-6"><StartAOVPrompt /></div>}
+
+      <AOVDisplay
+        currentMonthAOV={currentMonthAOV}
+        currentWeekAOV={currentWeekAOV}
+        currentTodayAOV={currentTodayAOV}
+        startAOV={clinic?.startAOV ?? null}
+        targetAOVMonthly={clinic?.targetAOVMonthly ?? null}
+        targetAOVQuarterly={clinic?.targetAOVQuarterly ?? null}
+        targetAOVHalfYearly={clinic?.targetAOVHalfYearly ?? null}
+        targetAOVYearly={clinic?.targetAOVYearly ?? null}
+      />
 
       <Card className="mt-8">
         <h2 className="mb-4 font-display text-lg font-medium text-clinical-text">
